@@ -132,7 +132,7 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ onAction, appContext }) => {
               </div>
             )}
             <div className="flex gap-2">
-              <button onClick={() => fileInputRef.current?.click()} className="p-4 bg-gray-800 rounded-2xl text-xl hover:bg-gray-700 transition-colors">📎</button>
+              <button onClick={() => fileInputRef.current?.click()} className="p-4 bg-gray-100 border border-gray-200 rounded-2xl text-xl hover:bg-gray-200 transition-colors text-gray-600">📎</button>
               <input type="file" ref={fileInputRef} className="hidden" multiple onChange={handleFileChange} />
               <input 
                 type="text" 
@@ -140,9 +140,9 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ onAction, appContext }) => {
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSend()}
                 placeholder="Comande a LexAI..."
-                className="flex-1 bg-black border border-gray-800 p-4 rounded-2xl text-xs text-white outline-none focus:border-[#D4AF37]"
+                className="flex-1 bg-white border border-gray-200 p-4 rounded-2xl text-xs text-gray-900 outline-none focus:border-[#D4AF37] placeholder:text-gray-400"
               />
-              <button onClick={handleSend} className="gold-gradient px-5 rounded-2xl text-white font-black">➔</button>
+              <button onClick={handleSend} className="gold-gradient px-5 rounded-2xl text-white font-black shadow-md hover:shadow-lg transition-all active:scale-95">➔</button>
             </div>
           </div>
         </div>

@@ -267,8 +267,26 @@ export const legalAssistantService = {
 
   async unifiedActionHandler(query: string, files: UploadedFile[], currentData: any) {
     const ai = getAI();
+    
+    // Processamento de arquivos anexados para garantir que o conteúdo seja lido e enviado
+    let fileContext = "";
+    if (files && files.length > 0) {
+      for (const f of files) {
+        if (f.name.toLowerCase().endsWith('.docx')) {
+          const text = await extractTextFromWord(f.data);
+          fileContext += `\nCONTEÚDO DO ARQUIVO "${f.name}":\n${text}\n---`;
+        } else {
+          // Para outros tipos (PDF/Imagens), o Gemini Pro vision/flash lida via inlineData se suportado
+          // Mas aqui garantimos a passagem do contexto textual se disponível
+          fileContext += `\n[Arquivo anexado: ${f.name} (${f.type})]`;
+        }
+      }
+    }
+
     const systemInstruction = `Você é o Cérebro LexAI, a inteligência central do sistema LexAI Pro.
     Sua função é auxiliar o advogado em qualquer tarefa do sistema através de comandos naturais.
+    
+    CRITICAL: Você deve basear suas respostas EXCLUSIVAMENTE nos fatos reais contidos nos arquivos anexados e no contexto do sistema. NÃO invente dados, nomes de processos ou valores que não estejam presentes.
     
     Capacidades:
     1. Pesquisa Jurídica (Jurisprudência no DataJud e Doutrina no Google Acadêmico).
@@ -277,14 +295,22 @@ export const legalAssistantService = {
     4. Relatórios (Gerar relatórios de processos ou faturamento).
     5. Gestão de Prazos (Agenda e audiências).
 
-    Se o usuário pedir algo como "cadastrar cliente", "gerar relatório" ou "fazer petição", você deve identificar a intenção e retornar a instrução clara para execução.
-    
-    Contexto Atual do Sistema: ${JSON.stringify(currentData)}`;
+    Contexto Atual do Sistema: ${JSON.stringify(currentData)}
+    Conteúdo dos Arquivos Anexados: ${fileContext}`;
 
     const parts: any[] = [];
-    parts.push({ text: `${systemInstruction}\n\nComando do Usuário: ${query}` });
+    
+    // Adiciona arquivos como inlineData se forem suportados nativamente pelo Gemini
+    for (const f of files) {
+      if (GEMINI_NATIVE_MIMES.includes(f.type)) {
+        parts.push({ inlineData: { data: f.data, mimeType: f.type } });
+      }
+    }
+
+    parts.push({ text: `${systemInstruction}\n\nComando do Usuário: ${query || "Analise os arquivos enviados."}` });
+    
     const res = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-1.5-pro', // Upgrade para Pro para melhor análise de documentos
       contents: { parts }
     });
     return { text: res.text, toolCalls: [] };
