@@ -47,7 +47,24 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ onAction, appContext }) => {
 
     try {
       console.log('Sending query with files:', attachedFiles.length);
-      const result = await legalAssistantService.unifiedActionHandler(query, attachedFiles, appContext);
+      
+      // Use the advanced drafting logic if we're asking for a petition/draft
+      const isDrafting = query.toLowerCase().includes('petição') || 
+                        query.toLowerCase().includes('inicial') || 
+                        query.toLowerCase().includes('minuta') ||
+                        query.toLowerCase().includes('contestação');
+
+      let result;
+      if (isDrafting) {
+        setMessages(prev => [...prev, { role: 'ai', content: 'Iniciando redação jurídica de alta precisão...', type: 'action' }]);
+        const draft = await legalAssistantService.advancedLegalDrafting({
+          prompt: query,
+          files: attachedFiles
+        });
+        result = { text: "Minuta gerada com sucesso! Você pode visualizar e baixar no LexAI Studio ou conferir o resumo aqui.\n\n" + (draft.html ? "Peça redigida conforme solicitado." : "Erro na geração.") };
+      } else {
+        result = await legalAssistantService.unifiedActionHandler(query, attachedFiles, appContext);
+      }
       
       if (result.toolCalls && result.toolCalls.length > 0) {
         for (const call of result.toolCalls) {
