@@ -1,0 +1,106 @@
+No exemplo abaixo é realizada a consulta de um processo judicial utilizando a numeração única do processo como parâmetro de pesquisa no tribunal do TRF1.
+
+POST /api_publica_tribunal/_search
+Postman
+Python
+R
+Abra o Postman e clique em "New Request".
+Defina o método HTTP como POST.
+Digite a URL: https://api-publica.datajud.cnj.jus.br/api_publica_trf1/_search
+Selecione a aba "Headers" e inclua a chave "Authorization" com o valor "APIKey [Chave Pública]";
+O valor [Chave Pública] corresponde a chave pública disponível em Chave Pública;
+Ainda em "Headers" inclua a chave "Content-Type" com o valor "application/json";
+Selecione a aba "Body" e escolha a opção "raw". Insira o corpo da solicitação JSON conforme o exemplo abaixo:
+Query DSL
+{
+    "query": {
+        "match": {
+            "numeroProcesso": "00008323520184013202"
+        }
+    }
+}
+
+Clique em Send para enviar e aguarde a resposta da Api.
+Resposta
+A resposta esperado é um JSON com os metadados de 1 ou mais processos conforme o critério da busca:
+
+JSON com os metadados processuais
+{
+    "took": 6679,
+    "timed_out": false,
+    "_shards": {
+        "total": 7,
+        "successful": 7,
+        "skipped": 0,
+        "failed": 0
+    },
+    "hits": {
+        "total": {
+            "value": 1,
+            "relation": "eq"
+        },
+        "max_score": 13.917725,
+        "hits": [
+            {
+                "_index": "api_publica_trf1",
+                "_type": "_doc",
+                "_id": "TRF1_436_JE_16403_00008323520184013202",
+                "_score": 13.917725,
+                "_source": {
+                    "numeroProcesso": "00008323520184013202",
+                    "classe": {
+                        "codigo": 436,
+                        "nome": "Procedimento do Juizado Especial Cível"
+                    },
+                    "sistema": {
+                        "codigo": 1,
+                        "nome": "Pje"
+                    },
+                    "formato": {
+                        "codigo": 1,
+                        "nome": "Eletrônico"
+                    },
+                    "tribunal": "TRF1",
+                    "dataHoraUltimaAtualizacao": "2023-07-21T19:10:08.483Z",
+                    "grau": "JE",
+                    "@timestamp": "2023-08-14T11:50:51.994Z",
+                    "dataAjuizamento": "2018-10-29T00:00:00.000Z",
+                    "movimentos": [
+                        {
+                            "complementosTabelados": [
+                                {
+                                    "codigo": 2,
+                                    "valor": 1,
+                                    "nome": "competência exclusiva",
+                                    "descricao": "tipo_de_distribuicao_redistribuicao"
+                                }
+                            ],
+                            "codigo": 26,
+                            "nome": "Distribuição",
+                            "dataHora": "2018-10-30T14:06:24.000Z"
+                        },
+                        ...
+                        {
+                            "codigo": 14732,
+                            "nome": "Conversão de Autos Físicos em Eletrônicos",
+                            "dataHora": "2020-08-05T01:15:18.000Z"
+                        }
+                    ],
+                    "id": "TRF1_436_JE_16403_00008323520184013202",
+                    "nivelSigilo": 0,
+                    "orgaoJulgador": {
+                        "codigoMunicipioIBGE": 5128,
+                        "codigo": 16403,
+                        "nome": "JEF Adj - Tefé"
+                    },
+                    "assuntos": [
+                        {
+                            "codigo": 6177,
+                            "nome": "Concessão"
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+}

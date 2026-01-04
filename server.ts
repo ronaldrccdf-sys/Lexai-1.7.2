@@ -9,7 +9,7 @@ app.use(cors());
 app.use(express.json());
 
 const DATAJUD_BASE_URL = 'https://api-publica.datajud.cnj.jus.br';
-const DATAJUD_API_KEY = 'cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw==';
+const DATAJUD_API_KEY = process.env.DATAJUD_API_KEY || 'cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw==';
 
 const ENDPOINTS = [
   'tjsp', 'trf1', 'trt2', 'stj', 'tst', 'tse', 'stm',
@@ -74,9 +74,16 @@ app.post('/proxy/datajud/:tribunal', async (req, res) => {
       body: JSON.stringify(req.body)
     });
 
-    const data = await response.json();
+    const text = await response.text();
     console.log(`Response status: ${response.status}`);
-    res.status(response.status).json(data);
+    
+    try {
+      const data = JSON.parse(text);
+      res.status(response.status).json(data);
+    } catch (parseError) {
+      console.error('Failed to parse DataJud response:', text);
+      res.status(response.status).send(text);
+    }
   } catch (error: any) {
     console.error('Proxy Error Details:', error);
     res.status(500).json({ error: 'Failed to fetch from DataJud', details: error.message });
