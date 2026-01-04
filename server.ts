@@ -44,22 +44,25 @@ app.post('/proxy/datajud/search_all', async (req, res) => {
         headers: {
           'Authorization': `APIKey ${DATAJUD_API_KEY}`,
           'Content-Type': 'application/json',
-          'User-Agent': 'LexAI-Pro/1.0'
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
         },
         body: JSON.stringify(query),
-        timeout: 10000 // Increased timeout
+        timeout: 15000
       });
       
       if (response.ok) {
         const data = await response.json();
         const hits = data.hits?.hits || [];
-        // Inject tribunal info into hits if not present
         return hits.map((hit: any) => ({
           ...hit,
           _tribunal: tribunal.toUpperCase()
         }));
+      } else {
+        const errText = await response.text();
+        console.error(`Tribunal ${tribunal} error (${response.status}):`, errText);
       }
-    } catch (e) {
+    } catch (e: any) {
+      console.error(`Tribunal ${tribunal} exception:`, e.message);
       return [];
     }
     return [];

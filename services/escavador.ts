@@ -60,15 +60,18 @@ const resolveTribunalEndpoint = (cnj: string): string => {
 
 export const datajudService = {
   async getProcessByCNJ(cnj: string): Promise<DatajudProcess | null> {
-    const cleanCNJ = cnj.replace(/[^\d.-]/g, '');
-    const tribunalSlug = resolveTribunalEndpoint(cleanCNJ);
+    const cleanCNJ = cnj.replace(/[^0-9]/g, '');
+    if (cleanCNJ.length !== 20) {
+      console.warn("Número de processo inválido (deve ter 20 dígitos):", cleanCNJ);
+    }
+    
     // Explicitly call the backend proxy
-    const endpoint = `/proxy/datajud/${tribunalSlug}`;
+    const endpoint = `/proxy/datajud/search_all`;
 
     const body = {
       query: {
         match: {
-          numeroProcesso: cleanCNJ.replace(/[^0-9]/g, '')
+          numeroProcesso: cleanCNJ
         }
       }
     };
@@ -93,20 +96,23 @@ export const datajudService = {
       const source = hits[0]._source;
       
       return {
-        id: source.id || cleanCNJ,
+        id: source.id || (source.numeroProcesso + (source.grau || '')),
         number: source.numeroProcesso,
         numero_cnj: source.numeroProcesso,
         classe: source.classe?.nome || 'Classe não informada',
-        tribunal: source.tribunal || tribunalSlug.toUpperCase(),
+        tribunal: source.tribunal || source.orgaoJulgador?.nome || 'DATAJUD',
         orgao_julgador: source.orgaoJulgador?.nome || 'Vara Indefinida',
         data_ajuizamento: source.dataAjuizamento,
-        movimentacoes: (source.movimentacoes || []).map((m: any, i: number) => ({
+        movimentacoes: (source.movimentos || source.movimentacoes || []).map((m: any, i: number) => ({
           id: i,
           data: m.dataHora,
-          conteudo: m.movimento?.nome || 'Movimentação sem descrição',
-          nome: m.movimento?.nome
+          conteudo: m.nome || m.movimento?.nome || 'Movimentação sem descrição',
+          nome: m.nome || m.movimento?.nome
         })),
-        partes: []
+        partes: (source.partes || []).map((p: any) => ({
+          nome: p.nome,
+          tipo: p.tipoPersonagem
+        }))
       };
     } catch (error: any) {
       console.warn("Aviso DATAJUD: Erro de conexão (Provável CORS). Operando em modo de simulação estruturada.", error.message);
@@ -115,7 +121,7 @@ export const datajudService = {
         number: cleanCNJ,
         numero_cnj: cleanCNJ,
         classe: "Procedimento Comum Cível (Simulação)",
-        tribunal: tribunalSlug.toUpperCase(),
+        tribunal: "TJSP",
         orgao_julgador: "1ª Vara Cível da Comarca",
         data_ajuizamento: new Date().toISOString(),
         movimentacoes: [
