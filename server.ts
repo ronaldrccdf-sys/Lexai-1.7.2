@@ -24,6 +24,9 @@ const ENDPOINTS = [
 app.post('/proxy/datajud/search_all', async (req, res) => {
   console.log('Exhaustive search requested:', JSON.stringify(req.body));
   
+  // Format the query properly for DataJud
+  const query = req.body;
+
   const searchPromises = ENDPOINTS.map(async (tribunal) => {
     const endpoint = `${DATAJUD_BASE_URL}/api_publica_${tribunal}/_search`;
     try {
@@ -34,24 +37,46 @@ app.post('/proxy/datajud/search_all', async (req, res) => {
           'Content-Type': 'application/json',
           'User-Agent': 'LexAI-Pro/1.0'
         },
-        body: JSON.stringify(req.body),
-        timeout: 5000
+        body: JSON.stringify(query),
+        timeout: 8000
       });
+      
+      const text = await response.text();
       if (response.ok) {
-        const data = await response.json();
-        return data.hits?.hits || [];
+        try {
+          const data = JSON.parse(text);
+          return data.hits?.hits || [];
+        } catch (e) {
+          return [];
+        }
+      } else {
+        console.error(`Error from ${tribunal}: ${response.status} - ${text}`);
+        return [];
       }
     } catch (e) {
       return [];
     }
-    return [];
   });
 
   try {
     const results = await Promise.all(searchPromises);
     const flatResults = results.flat();
-    res.json({ hits: { hits: flatResults } });
+    
+    // De-duplicate results by _id
+    const seen = new Set();
+    const uniqueResults = flatResults.filter(hit => {
+      const id = hit._id || (hit._source && hit._source.numeroProcesso);
+      if (id && !seen.has(id)) {
+        seen.add(id);
+        return true;
+      }
+      return false;
+    });
+
+    console.log(`Search complete. Found ${uniqueResults.length} unique results.`);
+    res.json({ hits: { hits: uniqueResults } });
   } catch (error: any) {
+    console.error('Exhaustive search error:', error);
     res.status(500).json({ error: 'Failed exhaustive search', details: error.message });
   }
 });

@@ -68,7 +68,7 @@ export const datajudService = {
     const body = {
       query: {
         match: {
-          numeroProcesso: cleanCNJ.replace(/\D/g, '')
+          numeroProcesso: cleanCNJ.replace(/[^0-9]/g, '')
         }
       }
     };
