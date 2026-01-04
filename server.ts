@@ -27,7 +27,16 @@ app.post('/proxy/datajud/search_all', async (req, res) => {
   // Format the query properly for DataJud
   const query = req.body;
 
-  const searchPromises = ENDPOINTS.map(async (tribunal) => {
+  // Prioritize most relevant endpoints for Brazilian Law to speed up and improve hit rate
+  const prioritizedEndpoints = [
+    'tjsp', 'trf1', 'stj', 'tst', 'tse', 'stm', 'trf2', 'trf3', 'trf4', 'trf5', 'trf6',
+    'trt2', 'tjrj', 'tjmg', 'tjrs', 'tjpr'
+  ];
+  
+  const otherEndpoints = ENDPOINTS.filter(e => !prioritizedEndpoints.includes(e));
+  const orderedEndpoints = [...prioritizedEndpoints, ...otherEndpoints];
+
+  const searchPromises = orderedEndpoints.map(async (tribunal) => {
     const endpoint = `${DATAJUD_BASE_URL}/api_publica_${tribunal}/_search`;
     try {
       const response = await fetch(endpoint, {
@@ -38,31 +47,29 @@ app.post('/proxy/datajud/search_all', async (req, res) => {
           'User-Agent': 'LexAI-Pro/1.0'
         },
         body: JSON.stringify(query),
-        timeout: 8000
+        timeout: 10000 // Increased timeout
       });
       
-      const text = await response.text();
       if (response.ok) {
-        try {
-          const data = JSON.parse(text);
-          return data.hits?.hits || [];
-        } catch (e) {
-          return [];
-        }
-      } else {
-        console.error(`Error from ${tribunal}: ${response.status} - ${text}`);
-        return [];
+        const data = await response.json();
+        const hits = data.hits?.hits || [];
+        // Inject tribunal info into hits if not present
+        return hits.map((hit: any) => ({
+          ...hit,
+          _tribunal: tribunal.toUpperCase()
+        }));
       }
     } catch (e) {
       return [];
     }
+    return [];
   });
 
   try {
     const results = await Promise.all(searchPromises);
     const flatResults = results.flat();
     
-    // De-duplicate results by _id
+    // De-duplicate and sort results
     const seen = new Set();
     const uniqueResults = flatResults.filter(hit => {
       const id = hit._id || (hit._source && hit._source.numeroProcesso);
@@ -73,10 +80,8 @@ app.post('/proxy/datajud/search_all', async (req, res) => {
       return false;
     });
 
-    console.log(`Search complete. Found ${uniqueResults.length} unique results.`);
     res.json({ hits: { hits: uniqueResults } });
   } catch (error: any) {
-    console.error('Exhaustive search error:', error);
     res.status(500).json({ error: 'Failed exhaustive search', details: error.message });
   }
 });
