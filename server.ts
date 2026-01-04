@@ -1,12 +1,59 @@
 import express from 'express';
 import cors from 'cors';
 import fetch from 'node-fetch';
+import PizZip from 'pizzip';
+import Docxtemplater from 'docxtemplater';
+import fs from 'fs';
+import path from 'path';
 
 const app = express();
 const port = 3001;
 
 app.use(cors());
 app.use(express.json());
+
+// Endpoint para gerar DOCX timbrado
+app.post('/proxy/generate_docx', async (req, res) => {
+  const { content } = req.body;
+  
+  try {
+    // 1. Ler o template timbrado do sistema
+    const templatePath = path.resolve('./attached_assets/papel_timbrado_final_1767560647830.docx');
+    const templateContent = fs.readFileSync(templatePath);
+    
+    const zip = new PizZip(templateContent);
+    const doc = new Docxtemplater(zip, {
+      paragraphLoop: true,
+      linebreaks: true,
+    });
+
+    // 2. Limpar o conteúdo HTML para texto puro formatado para o Word
+    const cleanText = content
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/p>/gi, '\n')
+      .replace(/<[^>]*>/g, '')
+      .trim();
+
+    // 3. Renderizar com a tag {{CONTEUDO}}
+    doc.render({
+      CONTEUDO: cleanText
+    });
+
+    // 4. Gerar o buffer do arquivo final
+    const buf = doc.getZip().generate({
+      type: 'nodebuffer',
+      compression: 'DEFLATE',
+    });
+
+    // 5. Retornar o arquivo como download
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    res.setHeader('Content-Disposition', 'attachment; filename=Peca_LexAI.docx');
+    res.send(buf);
+  } catch (error: any) {
+    console.error('Erro ao gerar DOCX no backend:', error);
+    res.status(500).json({ error: 'Falha ao processar documento timbrado' });
+  }
+});
 
 const DATAJUD_BASE_URL = 'https://api-publica.datajud.cnj.jus.br';
 const DATAJUD_API_KEY = process.env.DATAJUD_API_KEY || 'cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw==';

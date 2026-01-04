@@ -166,40 +166,28 @@ const AIStudio: React.FC<{ initialContext?: string, userName: string }> = ({ ini
     setIsDownloading(true);
 
     try {
-      // 1. Fetch official letterhead from attached_assets
-      const response = await fetch('/attached_assets/papel_timbrado_final_1767559511736.docx');
-      if (!response.ok) throw new Error("Template not found");
-      const content = await response.arrayBuffer();
-      
-      const zip = new PizZip(content);
-      const doc = new Docxtemplater(zip, {
-        paragraphLoop: true,
-        linebreaks: true,
+      const response = await fetch('/proxy/generate_docx', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: generatedHtml }),
       });
 
-      // 2. Clean HTML for DOCX
-      const cleanText = generatedHtml
-        .replace(/<br\s*\/?>/gi, '\n')
-        .replace(/<\/p>/gi, '\n')
-        .replace(/<[^>]*>/g, '')
-        .trim();
+      if (!response.ok) throw new Error("Erro na geração do documento");
 
-      // 3. Render and generate
-      doc.render({
-        CONTEUDO: cleanText
-      });
-
-      const out = doc.getZip().generate({
-        type: 'blob',
-        mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      });
-      
-      saveAs(out, `LexAI_Peca_Timbrada_${Date.now()}.docx`);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Peca_LexAI_Timbrada_${Date.now()}.docx`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Erro ao gerar DOCX timbrado:', error);
-      // Fallback to basic DOC if letterhead fails
-      const blob = new Blob(['\ufeff', generatedHtml], { type: 'application/msword' });
-      saveAs(blob, `LexAI_Peca_${Date.now()}.doc`);
+      console.error('Erro ao baixar DOCX timbrado:', error);
+      alert('Erro ao gerar documento. Tente novamente.');
     } finally {
       setIsDownloading(false);
     }
