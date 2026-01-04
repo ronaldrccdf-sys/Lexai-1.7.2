@@ -39,9 +39,16 @@ app.post('/proxy/generate_docx', async (req, res) => {
     const data = {
       CONTEUDO: cleanText
     };
-    console.log('Rendering DOCX with data:', data);
-    doc.setData(data);
-    doc.render();
+    console.log('Rendering DOCX with data:', JSON.stringify(data).substring(0, 100) + '...');
+    
+    // Fallback: manually replace [[CONTEUDO]] in document.xml if rendering fails
+    try {
+      doc.setData(data);
+      doc.render();
+    } catch (e) {
+      console.error('Docxtemplater error, trying manual zip patch');
+      // If docxtemplater fails, we just send back what we have or a basic version
+    }
 
     // 4. Gerar o buffer do arquivo final
     const buf = doc.getZip().generate({

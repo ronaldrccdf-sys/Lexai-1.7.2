@@ -2,7 +2,13 @@
 import { GoogleGenAI, Type, FunctionDeclaration, GenerateContentResponse } from "@google/genai";
 import * as mammoth from "mammoth";
 
-const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
+const getAI = () => {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    console.error("GEMINI_API_KEY não encontrada nos segredos!");
+  }
+  return new GoogleGenAI({ apiKey: apiKey || "" });
+};
 
 export interface JurisprudenceItem {
   id: string;
@@ -310,14 +316,11 @@ export const legalAssistantService = {
 
     parts.push({ text: `${systemInstruction}\n\nComando do Usuário: ${query || "Analise os arquivos enviados."}` });
     
-    const res = await ai.models.generateContent({
+    const res = await (ai as any).getGenerativeModel({
       model: 'gemini-1.5-pro',
-      contents: { parts },
-      config: {
-        systemInstruction: "Você é o Cérebro LexAI. Priorize o conteúdo dos arquivos anexados. Se for um PDF ou DOCX, extraia os nomes, datas e valores reais. Jamais invente dados."
-      }
-    });
-    return { text: res.text, toolCalls: [] };
+      systemInstruction: "Você é o Cérebro LexAI. Priorize o conteúdo dos arquivos anexados. Se for um PDF ou DOCX, extraia os nomes, datas e valores reais. Jamais invente dados."
+    }).generateContent({ contents: [{ role: 'user', parts }] });
+    return { text: (res.response as any).text(), toolCalls: [] };
   },
 
   async generateDailySummaryWhatsApp(events: any[]) {
