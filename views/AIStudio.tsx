@@ -1,4 +1,7 @@
 
+import PizZip from 'pizzip';
+import Docxtemplater from 'docxtemplater';
+import { saveAs } from 'file-saver';
 import React, { useState, useRef, useEffect } from 'react';
 import { legalAssistantService, JurisprudenceItem, DoctrineItem, UploadedFile, JurisprudenceFilters, convertWordToHtml } from '../services/gemini';
 
@@ -162,46 +165,44 @@ const AIStudio: React.FC<{ initialContext?: string, userName: string }> = ({ ini
     if (!generatedHtml) return;
     setIsDownloading(true);
 
-    let contentToSave = generatedHtml;
+    try {
+      // 1. Fetch official letterhead from attached_assets
+      const response = await fetch('/attached_assets/papel_timbrado_final_1767559511736.docx');
+      if (!response.ok) throw new Error("Template not found");
+      const content = await response.arrayBuffer();
+      
+      const zip = new PizZip(content);
+      const doc = new Docxtemplater(zip, {
+        paragraphLoop: true,
+        linebreaks: true,
+      });
 
-    if (wordTemplateFile) {
-      const templateHtml = await convertWordToHtml(wordTemplateFile.data);
-      if (templateHtml) {
-        if (templateHtml.includes('{{CONTEUDO}}')) {
-          contentToSave = templateHtml.replace('{{CONTEUDO}}', generatedHtml);
-        } else {
-          contentToSave = templateHtml + '<br clear="all" style="page-break-before:always" />' + generatedHtml;
-        }
-      }
+      // 2. Clean HTML for DOCX
+      const cleanText = generatedHtml
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/p>/gi, '\n')
+        .replace(/<[^>]*>/g, '')
+        .trim();
+
+      // 3. Render and generate
+      doc.render({
+        CONTEUDO: cleanText
+      });
+
+      const out = doc.getZip().generate({
+        type: 'blob',
+        mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      });
+      
+      saveAs(out, `LexAI_Peca_Timbrada_${Date.now()}.docx`);
+    } catch (error) {
+      console.error('Erro ao gerar DOCX timbrado:', error);
+      // Fallback to basic DOC if letterhead fails
+      const blob = new Blob(['\ufeff', generatedHtml], { type: 'application/msword' });
+      saveAs(blob, `LexAI_Peca_${Date.now()}.doc`);
+    } finally {
+      setIsDownloading(false);
     }
-
-    const fullDocHtml = `
-      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-      <head>
-        <meta charset='utf-8'>
-        <style>
-          @page { size: 21cm 29.7cm; margin: 2.5cm 2.5cm 2.5cm 2.5cm; }
-          body { font-family: 'Times New Roman', serif; line-height: 1.5; color: black; background: white; text-align: justify; }
-          p { margin: 0 0 12pt; font-size: 12pt; }
-          h1, h2, h3 { color: black; text-align: center; font-size: 14pt; margin-bottom: 20pt; font-weight: bold; }
-          b, strong { font-weight: bold; }
-        </style>
-      </head>
-      <body>
-        ${contentToSave}
-      </body>
-      </html>
-    `;
-
-    const blob = new Blob(['\ufeff', fullDocHtml], { type: 'application/msword' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `LexAI_Peca_${Date.now()}.doc`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    setIsDownloading(false);
   };
 
   return (
@@ -300,6 +301,11 @@ const AIStudio: React.FC<{ initialContext?: string, userName: string }> = ({ ini
                           <div className="flex gap-3 mt-3 border-t border-gray-800/50 pt-3">
                              <button onClick={(e) => { e.stopPropagation(); window.open(j.uri, '_blank'); }} className="text-[9px] font-black text-gray-400 hover:text-[#D4AF37] uppercase tracking-widest flex items-center gap-1">🔗 Abrir Link</button>
                              <button onClick={(e) => { e.stopPropagation(); handleShareSource(j.title, j.uri); }} className="text-[9px] font-black text-gray-400 hover:text-blue-400 uppercase tracking-widest flex items-center gap-1">📤 Compartilhar</button>
+                             <button onClick={(e) => { 
+                               e.stopPropagation(); 
+                               setPrompt(prev => prev + `\n\nJURISPRUDÊNCIA RELEVANTE:\n${j.title}\n${j.excerpt || ''}`);
+                               setIsToolboxOpen(false);
+                             }} className="text-[9px] font-black text-[#D4AF37] hover:text-white uppercase tracking-widest flex items-center gap-1">➕ Utilizar no Modelo</button>
                           </div>
                         </div>
                       )) : foundDoctrines.map(d => (
@@ -315,6 +321,11 @@ const AIStudio: React.FC<{ initialContext?: string, userName: string }> = ({ ini
                           <div className="flex gap-3 mt-3 border-t border-gray-800/50 pt-3">
                              <button onClick={(e) => { e.stopPropagation(); window.open(d.uri, '_blank'); }} className="text-[9px] font-black text-gray-400 hover:text-[#D4AF37] uppercase tracking-widest flex items-center gap-1">🔗 Abrir Fonte</button>
                              <button onClick={(e) => { e.stopPropagation(); handleShareSource(d.title, d.uri); }} className="text-[9px] font-black text-gray-400 hover:text-blue-400 uppercase tracking-widest flex items-center gap-1">📤 Compartilhar</button>
+                             <button onClick={(e) => { 
+                               e.stopPropagation(); 
+                               setPrompt(prev => prev + `\n\nDOUTRINA RELEVANTE:\n${d.title}\n${d.excerpt || ''}`);
+                               setIsToolboxOpen(false);
+                             }} className="text-[9px] font-black text-[#D4AF37] hover:text-white uppercase tracking-widest flex items-center gap-1">➕ Utilizar no Modelo</button>
                           </div>
                         </div>
                       ))
