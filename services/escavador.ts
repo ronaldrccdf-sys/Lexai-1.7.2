@@ -62,7 +62,7 @@ export const datajudService = {
   async getProcessByCNJ(cnj: string): Promise<DatajudProcess | null> {
     const cleanCNJ = cnj.replace(/[^\d.-]/g, '');
     const tribunalSlug = resolveTribunalEndpoint(cleanCNJ);
-    // Usando o proxy do backend para evitar problemas de CORS
+    // Explicitly call the backend proxy
     const endpoint = `/proxy/datajud/${tribunalSlug}`;
 
     const body = {
@@ -74,6 +74,7 @@ export const datajudService = {
     };
 
     try {
+      // In production, the proxy is handled by Vite in dev or by the backend server in prod
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {

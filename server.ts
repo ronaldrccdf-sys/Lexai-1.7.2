@@ -15,21 +15,26 @@ app.post('/proxy/datajud/:tribunal', async (req, res) => {
   const { tribunal } = req.params;
   const endpoint = `${DATAJUD_BASE_URL}/api_publica_${tribunal}/_search`;
 
+  console.log(`Proxying request to: ${endpoint}`);
+  console.log('Request body:', JSON.stringify(req.body));
+
   try {
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Authorization': `APIKey ${DATAJUD_API_KEY}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'User-Agent': 'LexAI-Pro/1.0'
       },
       body: JSON.stringify(req.body)
     });
 
     const data = await response.json();
+    console.log(`Response status: ${response.status}`);
     res.status(response.status).json(data);
-  } catch (error) {
-    console.error('Proxy Error:', error);
-    res.status(500).json({ error: 'Failed to fetch from DataJud' });
+  } catch (error: any) {
+    console.error('Proxy Error Details:', error);
+    res.status(500).json({ error: 'Failed to fetch from DataJud', details: error.message });
   }
 });
 
