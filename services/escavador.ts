@@ -74,8 +74,8 @@ export const datajudService = {
     };
 
     try {
-      // In production, the proxy is handled by Vite in dev or by the backend server in prod
-      const response = await fetch(endpoint, {
+      // Tenta busca exaustiva em todos os tribunais via backend
+      const response = await fetch('/proxy/datajud/search_all', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -85,22 +85,8 @@ export const datajudService = {
 
       if (!response.ok) throw new Error("Status " + response.status);
 
-      let result = await response.json();
-      let hits = result.hits?.hits;
-
-      // Fallback: Se não encontrar no tribunal específico, tenta busca global (TJSP/TRF1 etc)
-      if (!hits || hits.length === 0) {
-        const globalEndpoint = `/proxy/datajud/tjsp`; // TJSP como fallback comum
-        const fallbackRes = await fetch(globalEndpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
-        });
-        if (fallbackRes.ok) {
-          result = await fallbackRes.json();
-          hits = result.hits?.hits;
-        }
-      }
+      const result = await response.json();
+      const hits = result.hits?.hits;
 
       if (!hits || hits.length === 0) return null;
 
@@ -142,47 +128,38 @@ export const datajudService = {
   },
 
   async searchByFilters(filter: string): Promise<any[]> {
-    // Buscamos em múltiplos endpoints de fallback para pesquisa genérica
-    const tribunals = ['tjsp', 'trf1', 'trt2'];
-    let allResults: any[] = [];
-
-    for (const tribunal of tribunals) {
-      const endpoint = `/proxy/datajud/${tribunal}`;
-      const body = {
-        query: {
-          multi_match: {
-            query: filter,
-            fields: ["numeroProcesso", "partes.nome", "partes.cpfCnpj", "advogados.nome", "advogados.numeroOab"]
-          }
-        },
-        size: 5
-      };
-
-      try {
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          const hits = (result.hits?.hits || []).map((h: any) => ({
-            id: h._source.id || h._source.numeroProcesso,
-            number: h._source.numeroProcesso,
-            title: h._source.classe?.nome || 'Processo Judicial',
-            client: h._source.partes?.[0]?.nome || 'Consultar PJe',
-            court: h._source.orgaoJulgador?.nome || tribunal.toUpperCase()
-          }));
-          allResults = [...allResults, ...hits];
+    const body = {
+      query: {
+        multi_match: {
+          query: filter,
+          fields: ["numeroProcesso", "partes.nome", "partes.cpfCnpj", "advogados.nome", "advogados.numeroOab"]
         }
-      } catch (e) {}
-      if (allResults.length >= 10) break;
-    }
-    
-    // Remover duplicados por número de processo
-    const uniqueResults = Array.from(new Map(allResults.map(item => [item.number, item])).values());
-    return uniqueResults;
+      },
+      size: 10
+    };
+
+    try {
+      const response = await fetch('/proxy/datajud/search_all', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        const hits = (result.hits?.hits || []).map((h: any) => ({
+          id: h._source.id || h._source.numeroProcesso,
+          number: h._source.numeroProcesso,
+          title: h._source.classe?.nome || 'Processo Judicial',
+          client: h._source.partes?.[0]?.nome || 'Consultar PJe',
+          court: h._source.tribunal || h._source.orgaoJulgador?.nome || 'DATAJUD'
+        }));
+        
+        // Remover duplicados por número de processo
+        return Array.from(new Map(hits.map((item: any) => [item.number, item])).values());
+      }
+    } catch (e) {}
+    return [];
   }
 };
 
