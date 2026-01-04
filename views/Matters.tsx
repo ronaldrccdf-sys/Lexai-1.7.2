@@ -12,15 +12,32 @@ interface MattersProps {
 
 const Matters: React.FC<MattersProps> = ({ matters, setMatters, onGenerateAI }) => {
   const [searchCNJ, setSearchCNJ] = useState('');
+  const [genericSearch, setGenericSearch] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearchingRemote, setIsSearchingRemote] = useState(false);
+  const [isSearchingGeneric, setIsSearchingGeneric] = useState(false);
   const [syncingId, setSyncingId] = useState<string | null>(null);
   const [selectedCaseUpdates, setSelectedCaseUpdates] = useState<{caseId: string, updates: any[]} | null>(null);
 
-  const handleRemoteSearch = async () => {
-    if (!searchCNJ) return;
+  const handleGenericSearch = async () => {
+    if (!genericSearch) return;
+    setIsSearchingGeneric(true);
+    try {
+      const results = await datajudService.searchByFilters(genericSearch);
+      setSearchResults(results);
+    } catch (err) {
+      alert("Erro na pesquisa genérica.");
+    } finally {
+      setIsSearchingGeneric(false);
+    }
+  };
+
+  const handleRemoteSearch = async (targetNumber?: string) => {
+    const query = targetNumber || searchCNJ;
+    if (!query) return;
     setIsSearchingRemote(true);
     try {
-      const result = await datajudService.getProcessByCNJ(searchCNJ);
+      const result = await datajudService.getProcessByCNJ(query);
       if (result) {
         const lastMovement = result.movimentacoes?.[0]?.conteudo || "Ajuizamento detectado";
         const interpretation = await legalAssistantService.interpretMovement(lastMovement);
@@ -48,6 +65,7 @@ const Matters: React.FC<MattersProps> = ({ matters, setMatters, onGenerateAI }) 
         };
         setMatters(prev => [newCase, ...prev]);
         setSearchCNJ('');
+        setSearchResults([]);
       } else {
         alert("Processo não localizado na base do CNJ.");
       }
@@ -104,7 +122,41 @@ const Matters: React.FC<MattersProps> = ({ matters, setMatters, onGenerateAI }) 
         </div>
         
         <div className="flex flex-col md:flex-row gap-4 w-full xl:w-auto">
-          <div className="flex-1 md:w-96 bg-[#1C1C1C] border border-[#D4AF37]/20 p-2 rounded-2xl flex gap-2">
+          <div className="flex-1 md:w-96 bg-[#1C1C1C] border border-[#D4AF37]/20 p-2 rounded-2xl flex gap-2 relative">
+            <input 
+              type="text" 
+              value={genericSearch}
+              onChange={(e) => setGenericSearch(e.target.value)}
+              placeholder="PESQUISAR (CPF, CNPJ, OAB, NOME)"
+              className="flex-1 bg-transparent text-[10px] font-bold text-white uppercase outline-none px-3"
+              onKeyPress={(e) => e.key === 'Enter' && handleGenericSearch()}
+            />
+            <button 
+              onClick={handleGenericSearch}
+              disabled={isSearchingGeneric}
+              className="gold-gradient px-4 py-2 rounded-xl text-[10px] font-black text-white uppercase transition-all shadow-lg active:scale-95 disabled:opacity-50"
+            >
+              {isSearchingGeneric ? 'BUSCANDO...' : 'PESQUISAR'}
+            </button>
+
+            {searchResults.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-[#1C1C1C] border border-gray-800 rounded-2xl shadow-2xl z-[100] max-h-60 overflow-y-auto p-4 space-y-2">
+                <p className="text-[8px] font-black text-gray-500 uppercase tracking-widest mb-2">Resultados Encontrados</p>
+                {searchResults.map((res, idx) => (
+                  <div 
+                    key={idx} 
+                    onClick={() => handleRemoteSearch(res.number)}
+                    className="p-3 bg-black/20 rounded-xl border border-gray-800 hover:border-[#D4AF37]/50 cursor-pointer transition-all"
+                  >
+                    <p className="text-[10px] font-black text-white">{res.number}</p>
+                    <p className="text-[8px] text-gray-500 uppercase">{res.title} • {res.court}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="flex-1 md:w-80 bg-[#1C1C1C] border border-[#D4AF37]/20 p-2 rounded-2xl flex gap-2">
             <input 
               type="text" 
               value={searchCNJ}
@@ -114,7 +166,7 @@ const Matters: React.FC<MattersProps> = ({ matters, setMatters, onGenerateAI }) 
               onKeyPress={(e) => e.key === 'Enter' && handleRemoteSearch()}
             />
             <button 
-              onClick={handleRemoteSearch}
+              onClick={() => handleRemoteSearch()}
               disabled={isSearchingRemote}
               className="gold-gradient px-6 py-2 rounded-xl text-[10px] font-black text-white uppercase transition-all shadow-lg active:scale-95 disabled:opacity-50"
             >
@@ -129,41 +181,41 @@ const Matters: React.FC<MattersProps> = ({ matters, setMatters, onGenerateAI }) 
           <table className="w-full text-left text-sm min-w-[1200px]">
             <thead className="bg-[#1C1C1C] text-[9px] uppercase text-gray-500 font-black tracking-[0.2em]">
               <tr>
-                <th className="px-8 py-8">Processo / Tribunal</th>
-                <th className="px-8 py-8">Classe / Vara</th>
-                <th className="px-8 py-8 max-w-[400px]">Análise Preditiva LexAI</th>
-                <th className="px-8 py-8">Última Mov.</th>
-                <th className="px-8 py-8 text-right">Ações Oficiais</th>
+                <th className="px-4 py-8">Processo / Tribunal</th>
+                <th className="px-4 py-8">Classe / Vara</th>
+                <th className="px-4 py-8 max-w-[300px]">Análise Preditiva LexAI</th>
+                <th className="px-4 py-8">Última Mov.</th>
+                <th className="px-4 py-8 text-right">Ações Oficiais</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-800/50">
               {matters.map((m) => (
                 <tr key={m.id} className="hover:bg-black/20 transition-all group">
-                  <td className="px-8 py-8">
+                  <td className="px-4 py-8">
                     <p className="font-black text-white text-base group-hover:text-[#D4AF37] transition-colors">{m.number}</p>
                     <p className="text-[10px] text-gray-500 uppercase font-bold mt-1">CLIENTE: {m.client}</p>
                   </td>
-                  <td className="px-8 py-8">
+                  <td className="px-4 py-8">
                     <div className="space-y-1">
                        <p className="text-xs font-black text-gray-200 uppercase truncate max-w-[200px]">{m.title}</p>
                        <p className="text-[9px] text-gray-500 font-bold uppercase">{m.opposingParty}</p>
                     </div>
                   </td>
-                  <td className="px-8 py-8 max-w-[400px]">
+                  <td className="px-4 py-8 max-w-[300px]">
                     <div className="bg-black/30 p-5 rounded-2xl border border-gray-800/50 group-hover:border-[#D4AF37]/30 transition-all">
                        <p className="text-[10px] text-gray-300 font-serif italic leading-relaxed text-justify">
                          {m.lastMovementSummary || 'Aguardando varredura do Radar LexAI...'}
                        </p>
                     </div>
                   </td>
-                  <td className="px-8 py-8">
+                  <td className="px-4 py-8">
                     <p className="text-[10px] text-gray-400 font-black uppercase">{m.updates?.[0]?.date || m.openDate}</p>
                     <div className="flex items-center gap-1 mt-1">
                        <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
                        <span className="text-[8px] text-blue-400 font-black uppercase">DATAJUD</span>
                     </div>
                   </td>
-                  <td className="px-8 py-8 text-right">
+                  <td className="px-4 py-8 text-right">
                     <div className="flex justify-end gap-3">
                       <button 
                         onClick={() => handleSyncDatajud(m)}

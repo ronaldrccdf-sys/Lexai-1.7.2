@@ -1,6 +1,6 @@
 
 const DATAJUD_BASE_URL = 'https://api-publica.datajud.cnj.jus.br';
-const DATAJUD_API_KEY = 'cDZHYzlZa0JadVREZDJCendQbXY6SkJlTjLV9TRENyQk1RdnFKZ1RDQw==';
+const DATAJUD_API_KEY = 'cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw==';
 
 export interface DatajudMovement {
   id: string | number;
@@ -11,6 +11,7 @@ export interface DatajudMovement {
 
 export interface DatajudProcess {
   id: string;
+  number: string;
   numero_cnj: string;
   classe?: string;
   tribunal: string;
@@ -61,7 +62,6 @@ export const datajudService = {
   async getProcessByCNJ(cnj: string): Promise<DatajudProcess | null> {
     const cleanCNJ = cnj.replace(/[^\d.-]/g, '');
     const tribunalSlug = resolveTribunalEndpoint(cleanCNJ);
-    // Nota: O endpoint padrão da API pública segue o formato api_publica_tribunal
     const endpoint = `${DATAJUD_BASE_URL}/api_publica_${tribunalSlug}/_search`;
 
     const body = {
@@ -73,7 +73,6 @@ export const datajudService = {
     };
 
     try {
-      // Tenta a requisição oficial
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
@@ -94,6 +93,7 @@ export const datajudService = {
       
       return {
         id: source.id || cleanCNJ,
+        number: source.numeroProcesso,
         numero_cnj: source.numeroProcesso,
         classe: source.classe?.nome || 'Classe não informada',
         tribunal: source.tribunal || tribunalSlug.toUpperCase(),
@@ -108,12 +108,10 @@ export const datajudService = {
         partes: []
       };
     } catch (error: any) {
-      // Fallback para simulação em caso de erro de rede (CORS/Proxy necessário)
       console.warn("Aviso DATAJUD: Erro de conexão (Provável CORS). Operando em modo de simulação estruturada.", error.message);
-      
-      // Se for erro de rede/CORS, retornamos um mock realista para não quebrar a UX
       return {
         id: "mock-" + Date.now(),
+        number: cleanCNJ,
         numero_cnj: cleanCNJ,
         classe: "Procedimento Comum Cível (Simulação)",
         tribunal: tribunalSlug.toUpperCase(),
@@ -126,5 +124,45 @@ export const datajudService = {
         partes: []
       };
     }
+  },
+
+  async searchByFilters(filter: string): Promise<any[]> {
+    // API pública DataJud é otimizada para númeroProcesso. 
+    // Pesquisas genéricas podem ser limitadas dependendo do tribunal.
+    const tribunalSlug = 'tjsp'; // Default para pesquisa genérica
+    const endpoint = `${DATAJUD_BASE_URL}/api_publica_${tribunalSlug}/_search`;
+
+    const body = {
+      query: {
+        multi_match: {
+          query: filter,
+          fields: ["numeroProcesso", "partes.nome", "partes.cpfCnpj", "advogados.nome", "advogados.numeroOab"]
+        }
+      }
+    };
+
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Authorization': `APIKey ${DATAJUD_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+
+      if (!response.ok) return [];
+      const result = await response.json();
+      return (result.hits?.hits || []).map((h: any) => ({
+        id: h._source.id || h._source.numeroProcesso,
+        number: h._source.numeroProcesso,
+        title: h._source.classe?.nome || 'Processo Judicial',
+        client: h._source.partes?.[0]?.nome || 'Consultar PJe',
+        court: h._source.orgaoJulgador?.nome || 'Tribunal'
+      }));
+    } catch (error) {
+      return [];
+    }
   }
 };
+
