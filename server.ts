@@ -36,9 +36,12 @@ app.post('/proxy/generate_docx', async (req, res) => {
       .trim();
 
     // 3. Renderizar com a tag [[CONTEUDO]]
-    doc.render({
+    const data = {
       CONTEUDO: cleanText
-    });
+    };
+    console.log('Rendering DOCX with data:', data);
+    doc.setData(data);
+    doc.render();
 
     // 4. Gerar o buffer do arquivo final
     const buf = doc.getZip().generate({
