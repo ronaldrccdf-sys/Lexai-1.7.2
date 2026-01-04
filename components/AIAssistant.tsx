@@ -89,21 +89,21 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ onAction, appContext }) => {
             <button onClick={() => setIsOpen(false)} className="hover:rotate-90 transition-transform bg-black/20 p-2 rounded-full">✕</button>
           </div>
           
-          <div ref={scrollRef} className="flex-1 p-6 overflow-y-auto bg-black/40 space-y-4 no-scrollbar">
+          <div ref={scrollRef} className="flex-1 p-6 overflow-y-auto bg-gray-50 space-y-4 no-scrollbar">
             {messages.length === 0 && (
-              <div className="h-full flex flex-col items-center justify-center opacity-20 text-center space-y-4">
+              <div className="h-full flex flex-col items-center justify-center opacity-40 text-center space-y-4 text-gray-400">
                 <span className="text-5xl">⚡</span>
-                <p className="text-[10px] font-black uppercase tracking-widest">Peça para cadastrar clientes, gerar relatórios ou redigir peças.</p>
+                <p className="text-[10px] font-black uppercase tracking-widest">Comande a LexAI para cadastrar clientes, gerar relatórios ou redigir peças.</p>
               </div>
             )}
             {messages.map((msg, i) => (
               <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[85%] p-4 rounded-3xl text-xs font-medium leading-relaxed ${
+                <div className={`max-w-[85%] p-4 rounded-3xl text-xs font-semibold leading-relaxed shadow-sm ${
                   msg.role === 'user' 
                     ? 'bg-[#D4AF37] text-black rounded-tr-none' 
                     : msg.type === 'action' 
-                      ? 'bg-blue-900/20 text-blue-400 border border-blue-500/30' 
-                      : 'bg-white/5 text-gray-200 rounded-tl-none border border-white/10'
+                      ? 'bg-blue-100 text-blue-700 border border-blue-200' 
+                      : 'bg-white text-gray-800 rounded-tl-none border border-gray-200'
                 }`}>
                   {msg.content}
                 </div>

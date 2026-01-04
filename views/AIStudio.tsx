@@ -301,11 +301,6 @@ const AIStudio: React.FC<{ initialContext?: string, userName: string }> = ({ ini
                           <div className="flex gap-3 mt-3 border-t border-gray-800/50 pt-3">
                              <button onClick={(e) => { e.stopPropagation(); window.open(j.uri, '_blank'); }} className="text-[9px] font-black text-gray-400 hover:text-[#D4AF37] uppercase tracking-widest flex items-center gap-1">🔗 Abrir Link</button>
                              <button onClick={(e) => { e.stopPropagation(); handleShareSource(j.title, j.uri); }} className="text-[9px] font-black text-gray-400 hover:text-blue-400 uppercase tracking-widest flex items-center gap-1">📤 Compartilhar</button>
-                             <button onClick={(e) => { 
-                               e.stopPropagation(); 
-                               setPrompt(prev => prev + `\n\nJURISPRUDÊNCIA RELEVANTE:\n${j.title}\n${j.excerpt || ''}`);
-                               setIsToolboxOpen(false);
-                             }} className="text-[9px] font-black text-[#D4AF37] hover:text-white uppercase tracking-widest flex items-center gap-1">➕ Utilizar no Modelo</button>
                           </div>
                         </div>
                       )) : foundDoctrines.map(d => (
@@ -321,11 +316,6 @@ const AIStudio: React.FC<{ initialContext?: string, userName: string }> = ({ ini
                           <div className="flex gap-3 mt-3 border-t border-gray-800/50 pt-3">
                              <button onClick={(e) => { e.stopPropagation(); window.open(d.uri, '_blank'); }} className="text-[9px] font-black text-gray-400 hover:text-[#D4AF37] uppercase tracking-widest flex items-center gap-1">🔗 Abrir Fonte</button>
                              <button onClick={(e) => { e.stopPropagation(); handleShareSource(d.title, d.uri); }} className="text-[9px] font-black text-gray-400 hover:text-blue-400 uppercase tracking-widest flex items-center gap-1">📤 Compartilhar</button>
-                             <button onClick={(e) => { 
-                               e.stopPropagation(); 
-                               setPrompt(prev => prev + `\n\nDOUTRINA RELEVANTE:\n${d.title}\n${d.excerpt || ''}`);
-                               setIsToolboxOpen(false);
-                             }} className="text-[9px] font-black text-[#D4AF37] hover:text-white uppercase tracking-widest flex items-center gap-1">➕ Utilizar no Modelo</button>
                           </div>
                         </div>
                       ))
@@ -369,7 +359,7 @@ const AIStudio: React.FC<{ initialContext?: string, userName: string }> = ({ ini
                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Visualização ABNT LexAI</span>
                <div className="flex gap-3">
                  <button onClick={() => { navigator.clipboard.writeText(generatedHtml.replace(/<[^>]*>/g, '')); alert('Texto puro copiado!'); }} className="bg-gray-100 text-gray-600 px-4 py-2 rounded-full text-[10px] font-black uppercase hover:bg-gray-200 transition-all">Copiar Texto</button>
-                 <button onClick={handleDownloadDoc} disabled={isDownloading} className="bg-black text-white px-6 py-2 rounded-full text-[10px] font-black uppercase hover:scale-105 transition-all">
+                 <button onClick={handleDownloadDoc} disabled={isDownloading} className="bg-gray-100 text-gray-900 px-6 py-2 rounded-full text-[10px] font-black uppercase hover:bg-gray-200 transition-all border border-gray-200 shadow-sm">
                    {isDownloading ? 'Gerando .DOC...' : 'Baixar .DOC Timbrado'}
                  </button>
                </div>

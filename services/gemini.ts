@@ -267,8 +267,22 @@ export const legalAssistantService = {
 
   async unifiedActionHandler(query: string, files: UploadedFile[], currentData: any) {
     const ai = getAI();
+    const systemInstruction = `Você é o Cérebro LexAI, a inteligência central do sistema LexAI Pro.
+    Sua função é auxiliar o advogado em qualquer tarefa do sistema através de comandos naturais.
+    
+    Capacidades:
+    1. Pesquisa Jurídica (Jurisprudência no DataJud e Doutrina no Google Acadêmico).
+    2. Redação de Peças (Petições, Contestações, Contratos).
+    3. Gestão de Clientes (Cadastrar, Consultar).
+    4. Relatórios (Gerar relatórios de processos ou faturamento).
+    5. Gestão de Prazos (Agenda e audiências).
+
+    Se o usuário pedir algo como "cadastrar cliente", "gerar relatório" ou "fazer petição", você deve identificar a intenção e retornar a instrução clara para execução.
+    
+    Contexto Atual do Sistema: ${JSON.stringify(currentData)}`;
+
     const parts: any[] = [];
-    parts.push({ text: `Contexto: ${JSON.stringify(currentData)}. Comando: ${query}` });
+    parts.push({ text: `${systemInstruction}\n\nComando do Usuário: ${query}` });
     const res = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: { parts }
