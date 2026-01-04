@@ -25,6 +25,7 @@ app.post('/proxy/generate_docx', async (req, res) => {
     const doc = new Docxtemplater(zip, {
       paragraphLoop: true,
       linebreaks: true,
+      delimiters: { start: '[[', end: ']]' } // Change delimiters to avoid conflict with standard {{ }}
     });
 
     // 2. Limpar o conteúdo HTML para texto puro formatado para o Word
@@ -34,7 +35,7 @@ app.post('/proxy/generate_docx', async (req, res) => {
       .replace(/<[^>]*>/g, '')
       .trim();
 
-    // 3. Renderizar com a tag {{CONTEUDO}}
+    // 3. Renderizar com a tag [[CONTEUDO]]
     doc.render({
       CONTEUDO: cleanText
     });

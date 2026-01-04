@@ -272,12 +272,13 @@ export const legalAssistantService = {
     let fileContext = "";
     if (files && files.length > 0) {
       for (const f of files) {
-        if (f.name.toLowerCase().endsWith('.docx')) {
+        if (f.name.toLowerCase().endsWith('.docx') || f.type.includes('word')) {
           const text = await extractTextFromWord(f.data);
           fileContext += `\nCONTEÚDO DO ARQUIVO "${f.name}":\n${text}\n---`;
+        } else if (f.name.toLowerCase().endsWith('.pdf') || f.type === 'application/pdf') {
+          // Explicitly mark PDF for Gemini analysis
+          fileContext += `\n[PDF ANEXADO PARA ANÁLISE: ${f.name}]`;
         } else {
-          // Para outros tipos (PDF/Imagens), o Gemini Pro vision/flash lida via inlineData se suportado
-          // Mas aqui garantimos a passagem do contexto textual se disponível
           fileContext += `\n[Arquivo anexado: ${f.name} (${f.type})]`;
         }
       }
