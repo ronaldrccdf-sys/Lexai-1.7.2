@@ -46,6 +46,7 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ onAction, appContext }) => {
     setLoading(true);
 
     try {
+      console.log('Sending query with files:', attachedFiles.length);
       const result = await legalAssistantService.unifiedActionHandler(query, attachedFiles, appContext);
       
       if (result.toolCalls && result.toolCalls.length > 0) {

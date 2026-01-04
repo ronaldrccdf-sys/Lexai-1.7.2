@@ -310,8 +310,11 @@ export const legalAssistantService = {
     parts.push({ text: `${systemInstruction}\n\nComando do Usuário: ${query || "Analise os arquivos enviados."}` });
     
     const res = await ai.models.generateContent({
-      model: 'gemini-1.5-pro', // Upgrade para Pro para melhor análise de documentos
-      contents: { parts }
+      model: 'gemini-1.5-pro',
+      contents: { parts },
+      config: {
+        systemInstruction: "Você é o Cérebro LexAI. Priorize o conteúdo dos arquivos anexados. Se for um PDF ou DOCX, extraia os nomes, datas e valores reais. Jamais invente dados."
+      }
     });
     return { text: res.text, toolCalls: [] };
   },
