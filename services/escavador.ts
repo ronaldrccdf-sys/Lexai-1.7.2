@@ -85,8 +85,22 @@ export const datajudService = {
 
       if (!response.ok) throw new Error("Status " + response.status);
 
-      const result = await response.json();
-      const hits = result.hits?.hits;
+      let result = await response.json();
+      let hits = result.hits?.hits;
+
+      // Fallback: Se não encontrar no tribunal específico, tenta busca global (TJSP/TRF1 etc)
+      if (!hits || hits.length === 0) {
+        const globalEndpoint = `/proxy/datajud/tjsp`; // TJSP como fallback comum
+        const fallbackRes = await fetch(globalEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        if (fallbackRes.ok) {
+          result = await fallbackRes.json();
+          hits = result.hits?.hits;
+        }
+      }
 
       if (!hits || hits.length === 0) return null;
 
@@ -128,39 +142,47 @@ export const datajudService = {
   },
 
   async searchByFilters(filter: string): Promise<any[]> {
-    const tribunalSlug = 'tjsp'; 
-    const endpoint = `/proxy/datajud/${tribunalSlug}`;
+    // Buscamos em múltiplos endpoints de fallback para pesquisa genérica
+    const tribunals = ['tjsp', 'trf1', 'trt2'];
+    let allResults: any[] = [];
 
-    const body = {
-      query: {
-        multi_match: {
-          query: filter,
-          fields: ["numeroProcesso", "partes.nome", "partes.cpfCnpj", "advogados.nome", "advogados.numeroOab"]
-        }
-      }
-    };
-
-    try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
+    for (const tribunal of tribunals) {
+      const endpoint = `/proxy/datajud/${tribunal}`;
+      const body = {
+        query: {
+          multi_match: {
+            query: filter,
+            fields: ["numeroProcesso", "partes.nome", "partes.cpfCnpj", "advogados.nome", "advogados.numeroOab"]
+          }
         },
-        body: JSON.stringify(body)
-      });
+        size: 5
+      };
 
-      if (!response.ok) return [];
-      const result = await response.json();
-      return (result.hits?.hits || []).map((h: any) => ({
-        id: h._source.id || h._source.numeroProcesso,
-        number: h._source.numeroProcesso,
-        title: h._source.classe?.nome || 'Processo Judicial',
-        client: h._source.partes?.[0]?.nome || 'Consultar PJe',
-        court: h._source.orgaoJulgador?.nome || 'Tribunal'
-      }));
-    } catch (error) {
-      return [];
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          const hits = (result.hits?.hits || []).map((h: any) => ({
+            id: h._source.id || h._source.numeroProcesso,
+            number: h._source.numeroProcesso,
+            title: h._source.classe?.nome || 'Processo Judicial',
+            client: h._source.partes?.[0]?.nome || 'Consultar PJe',
+            court: h._source.orgaoJulgador?.nome || tribunal.toUpperCase()
+          }));
+          allResults = [...allResults, ...hits];
+        }
+      } catch (e) {}
+      if (allResults.length >= 10) break;
     }
+    
+    // Remover duplicados por número de processo
+    const uniqueResults = Array.from(new Map(allResults.map(item => [item.number, item])).values());
+    return uniqueResults;
   }
 };
 
