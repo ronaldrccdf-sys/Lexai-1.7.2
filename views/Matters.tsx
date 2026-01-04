@@ -2,7 +2,7 @@
 import React, { useState, useRef } from 'react';
 import { Case, CaseUpdate } from '../types';
 import { legalAssistantService } from '../services/gemini';
-import { datajudService } from '../services/escavador';
+import { datajudService } from '../services/datajud';
 
 interface MattersProps {
   matters: Case[];
@@ -181,54 +181,66 @@ const Matters: React.FC<MattersProps> = ({ matters, setMatters, onGenerateAI }) 
           <table className="w-full text-left text-sm min-w-[1200px]">
             <thead className="bg-[#1C1C1C] text-[9px] uppercase text-gray-500 font-black tracking-[0.2em]">
               <tr>
-                <th className="px-4 py-8">Processo / Tribunal</th>
+                <th className="px-4 py-8">Nº Processo</th>
+                <th className="px-4 py-8">Autor / Réu</th>
                 <th className="px-4 py-8">Classe / Vara</th>
-                <th className="px-4 py-8 max-w-[300px]">Análise Preditiva LexAI</th>
-                <th className="px-4 py-8">Última Mov.</th>
-                <th className="px-4 py-8 text-right">Ações Oficiais</th>
+                <th className="px-4 py-8">Teor / Movimentação</th>
+                <th className="px-4 py-8">Datas (Int./Prazo)</th>
+                <th className="px-4 py-8 max-w-[250px]">Resumo LEXAI</th>
+                <th className="px-4 py-8 text-right">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-800/50">
               {matters.map((m) => (
                 <tr key={m.id} className="hover:bg-black/20 transition-all group">
                   <td className="px-4 py-8">
-                    <p className="font-black text-white text-base group-hover:text-[#D4AF37] transition-colors">{m.number}</p>
-                    <p className="text-[10px] text-gray-500 uppercase font-bold mt-1">CLIENTE: {m.client}</p>
+                    <p className="font-black text-white text-sm group-hover:text-[#D4AF37] transition-colors cursor-pointer" onClick={() => setSelectedCaseUpdates({ caseId: m.id, updates: m.updates || [] })}>{m.number}</p>
+                  </td>
+                  <td className="px-4 py-8">
+                    <p className="text-[10px] text-gray-300 font-bold uppercase truncate max-w-[150px]">{m.client || 'Consultar PJe'}</p>
+                    <p className="text-[9px] text-gray-500 font-bold uppercase truncate max-w-[150px]">{m.opposingParty || 'Não informado'}</p>
                   </td>
                   <td className="px-4 py-8">
                     <div className="space-y-1">
-                       <p className="text-xs font-black text-gray-200 uppercase truncate max-w-[200px]">{m.title}</p>
-                       <p className="text-[9px] text-gray-500 font-bold uppercase">{m.opposingParty}</p>
+                       <p className="text-xs font-black text-gray-200 uppercase truncate max-w-[180px]">{m.title}</p>
+                       <p className="text-[9px] text-gray-500 font-bold uppercase truncate max-w-[180px]">{m.opposingParty}</p>
                     </div>
                   </td>
-                  <td className="px-4 py-8 max-w-[300px]">
-                    <div className="bg-black/30 p-5 rounded-2xl border border-gray-800/50 group-hover:border-[#D4AF37]/30 transition-all">
-                       <p className="text-[10px] text-gray-300 font-serif italic leading-relaxed text-justify">
-                         {m.lastMovementSummary || 'Aguardando varredura do Radar LexAI...'}
+                  <td className="px-4 py-8 max-w-[200px]">
+                    <p className="text-[10px] text-gray-400 font-medium italic line-clamp-2 leading-relaxed">
+                      {m.currentSituation || 'Aguardando sincronização...'}
+                    </p>
+                  </td>
+                  <td className="px-4 py-8">
+                    <div className="space-y-1">
+                      <p className="text-[9px] text-gray-400 font-black uppercase">INT: {m.notificationDate || m.openDate}</p>
+                      <p className="text-[9px] text-blue-400 font-black uppercase">INI: {m.termStartDate || '--'}</p>
+                      <p className="text-[9px] text-red-400 font-black uppercase">FATAL: {m.finalDeadline || '--'}</p>
+                    </div>
+                  </td>
+                  <td className="px-4 py-8 max-w-[250px]">
+                    <div className="bg-black/30 p-4 rounded-xl border border-gray-800/50 group-hover:border-[#D4AF37]/30 transition-all">
+                       <p className="text-[9px] text-gray-300 font-serif italic leading-relaxed text-justify line-clamp-3">
+                         {m.lastMovementSummary || 'Aguardando varredura LexAI...'}
                        </p>
                     </div>
                   </td>
-                  <td className="px-4 py-8">
-                    <p className="text-[10px] text-gray-400 font-black uppercase">{m.updates?.[0]?.date || m.openDate}</p>
-                    <div className="flex items-center gap-1 mt-1">
-                       <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
-                       <span className="text-[8px] text-blue-400 font-black uppercase">DATAJUD</span>
-                    </div>
-                  </td>
                   <td className="px-4 py-8 text-right">
-                    <div className="flex justify-end gap-3">
+                    <div className="flex justify-end gap-2">
                       <button 
                         onClick={() => handleSyncDatajud(m)}
                         disabled={syncingId === m.id}
-                        className="bg-blue-900/10 text-blue-400 px-5 py-2.5 rounded-xl text-[9px] font-black uppercase border border-blue-500/20 hover:bg-blue-500 hover:text-white transition-all disabled:opacity-50"
+                        title="Atualizar"
+                        className="p-2 bg-blue-900/10 text-blue-400 rounded-lg border border-blue-500/20 hover:bg-blue-500 hover:text-white transition-all disabled:opacity-50"
                       >
-                        {syncingId === m.id ? 'Sincronizando...' : 'Atualizar'}
+                        {syncingId === m.id ? '...' : '🔄'}
                       </button>
                       <button 
                         onClick={() => onGenerateAI(`PROCESSO: ${m.number}\nRESUMO: ${m.lastMovementSummary}`)}
-                        className="bg-[#D4AF37]/10 text-[#D4AF37] px-5 py-2.5 rounded-xl text-[9px] font-black uppercase border border-[#D4AF37]/30 hover:bg-[#D4AF37] hover:text-black transition-all"
+                        title="Gerar Peça"
+                        className="p-2 bg-[#D4AF37]/10 text-[#D4AF37] rounded-lg border border-[#D4AF37]/30 hover:bg-[#D4AF37] hover:text-black transition-all"
                       >
-                        Gerar Peça
+                        📄
                       </button>
                     </div>
                   </td>
