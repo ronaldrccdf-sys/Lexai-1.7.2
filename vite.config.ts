@@ -9,6 +9,12 @@ export default defineConfig(({ mode }) => {
         port: 5000,
         host: '0.0.0.0',
         allowedHosts: true,
+        proxy: {
+          '/proxy': {
+            target: 'http://localhost:3001',
+            changeOrigin: true,
+          }
+        }
       },
       plugins: [react()],
       define: {

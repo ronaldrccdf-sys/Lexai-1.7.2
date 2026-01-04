@@ -62,7 +62,8 @@ export const datajudService = {
   async getProcessByCNJ(cnj: string): Promise<DatajudProcess | null> {
     const cleanCNJ = cnj.replace(/[^\d.-]/g, '');
     const tribunalSlug = resolveTribunalEndpoint(cleanCNJ);
-    const endpoint = `${DATAJUD_BASE_URL}/api_publica_${tribunalSlug}/_search`;
+    // Usando o proxy do backend para evitar problemas de CORS
+    const endpoint = `/proxy/datajud/${tribunalSlug}`;
 
     const body = {
       query: {
@@ -76,7 +77,6 @@ export const datajudService = {
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
-          'Authorization': `APIKey ${DATAJUD_API_KEY}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(body)
@@ -127,10 +127,8 @@ export const datajudService = {
   },
 
   async searchByFilters(filter: string): Promise<any[]> {
-    // API pública DataJud é otimizada para númeroProcesso. 
-    // Pesquisas genéricas podem ser limitadas dependendo do tribunal.
-    const tribunalSlug = 'tjsp'; // Default para pesquisa genérica
-    const endpoint = `${DATAJUD_BASE_URL}/api_publica_${tribunalSlug}/_search`;
+    const tribunalSlug = 'tjsp'; 
+    const endpoint = `/proxy/datajud/${tribunalSlug}`;
 
     const body = {
       query: {
@@ -145,7 +143,6 @@ export const datajudService = {
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
-          'Authorization': `APIKey ${DATAJUD_API_KEY}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(body)
