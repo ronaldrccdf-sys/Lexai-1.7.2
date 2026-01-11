@@ -31,11 +31,13 @@ export const DATAJUD_TRIBUNAL_ALIASES = [
   'stj', 'tst', 'tse', 'stm'
 ];
 
+const DATAJUD_PROXY_BASE = (import.meta.env.VITE_BACKEND_URL || '').replace(/\/$/, '');
+
 export const datajudService = {
   async getProcessByCNJ(cnj: string, tribunalAlias: string): Promise<DatajudProcess | null> {
     const cleanCNJ = cnj.replace(/[^0-9]/g, '');
     if (cleanCNJ.length !== 20) {
-      console.warn("Número de processo inválido (deve ter 20 dígitos):", cleanCNJ);
+      throw new Error("Número de processo inválido. Use 20 dígitos do CNJ.");
     }
     
     const body = {
@@ -46,48 +48,47 @@ export const datajudService = {
       }
     };
 
-    try {
-      const response = await fetch(`/proxy/datajud/${tribunalAlias}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(body)
-      });
+    const proxyUrl = `${DATAJUD_PROXY_BASE}/proxy/datajud/${tribunalAlias}`;
+    const response = await fetch(proxyUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
 
-      if (!response.ok) throw new Error("Status " + response.status);
-
-      const result = await response.json();
-      const hits = result.hits?.hits;
-
-      if (!hits || hits.length === 0) return null;
-
-      const source = hits[0]._source;
-      const tribunal = hits[0]._tribunal || tribunalAlias.toUpperCase();
-      
-      return {
-        id: source.id || (source.numeroProcesso + (source.grau || '')),
-        number: source.numeroProcesso,
-        numero_cnj: source.numeroProcesso,
-        classe: source.classe?.nome || 'Classe não informada',
-        tribunal: tribunal,
-        tribunalAlias,
-        orgao_julgador: source.orgaoJulgador?.nome || 'Vara Indefinida',
-        data_ajuizamento: source.dataAjuizamento,
-        movimentacoes: (source.movimentos || source.movimentacoes || []).map((m: any, i: number) => ({
-          id: i,
-          data: m.dataHora,
-          conteudo: m.nome || m.movimento?.nome || 'Movimentação sem descrição',
-          nome: m.nome || m.movimento?.nome
-        })),
-        partes: (source.partes || []).map((p: any) => ({
-          nome: p.nome,
-          tipo: p.tipoPersonagem
-        }))
-      };
-    } catch (error: any) {
-      console.warn("Aviso DATAJUD: Erro de conexão.", error.message);
-      return null;
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(`DataJud respondeu ${response.status}: ${errorBody || 'sem detalhes'}`);
     }
+
+    const result = await response.json();
+    const hits = result.hits?.hits;
+
+    if (!hits || hits.length === 0) return null;
+
+    const source = hits[0]._source;
+    const tribunal = hits[0]._tribunal || tribunalAlias.toUpperCase();
+    
+    return {
+      id: source.id || (source.numeroProcesso + (source.grau || '')),
+      number: source.numeroProcesso,
+      numero_cnj: source.numeroProcesso,
+      classe: source.classe?.nome || 'Classe não informada',
+      tribunal: tribunal,
+      tribunalAlias,
+      orgao_julgador: source.orgaoJulgador?.nome || 'Vara Indefinida',
+      data_ajuizamento: source.dataAjuizamento,
+      movimentacoes: (source.movimentos || source.movimentacoes || []).map((m: any, i: number) => ({
+        id: i,
+        data: m.dataHora,
+        conteudo: m.nome || m.movimento?.nome || 'Movimentação sem descrição',
+        nome: m.nome || m.movimento?.nome
+      })),
+      partes: (source.partes || []).map((p: any) => ({
+        nome: p.nome,
+        tipo: p.tipoPersonagem
+      }))
+    };
   }
 };

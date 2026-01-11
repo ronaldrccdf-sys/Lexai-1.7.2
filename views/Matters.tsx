@@ -69,7 +69,8 @@ const Matters: React.FC<MattersProps> = ({ matters, setMatters, onGenerateAI }) 
         alert("Processo não localizado na base do CNJ.");
       }
     } catch (err) {
-      alert("Falha ao comunicar com o Radar DATAJUD.");
+      const message = err instanceof Error ? err.message : "Falha ao comunicar com o Radar DATAJUD.";
+      alert(message);
     } finally {
       setIsSearchingRemote(false);
     }
@@ -103,7 +104,8 @@ const Matters: React.FC<MattersProps> = ({ matters, setMatters, onGenerateAI }) 
         setSelectedCaseUpdates({ caseId: m.id, updates: newUpdates });
       }
     } catch (err) {
-      alert("Erro na sincronização.");
+      const message = err instanceof Error ? err.message : "Erro na sincronização.";
+      alert(message);
     } finally {
       setSyncingId(null);
     }
