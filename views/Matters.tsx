@@ -81,6 +81,11 @@ const Matters: React.FC<MattersProps> = ({ matters, setMatters, onGenerateAI }) 
     try {
       const result = await datajudService.getProcessByCNJ(m.number);
       if (result) {
+        const autor = result.client || m.client;
+        const reu = result.opposingParty || m.opposingParty;
+        const teor = result.currentSituation || m.currentSituation;
+        const dataInt = result.notificationDate || m.notificationDate;
+        
         const latestRaw = result.movimentacoes[0]?.conteudo || "Sem movimentos";
         const lastSummary = await legalAssistantService.interpretMovement(latestRaw);
 
@@ -93,7 +98,15 @@ const Matters: React.FC<MattersProps> = ({ matters, setMatters, onGenerateAI }) 
         }));
 
         setMatters(prev => prev.map(item => 
-          item.id === m.id ? { ...item, updates: newUpdates, lastMovementSummary: lastSummary } : item
+          item.id === m.id ? { 
+            ...item, 
+            client: autor,
+            opposingParty: reu,
+            currentSituation: teor,
+            notificationDate: dataInt,
+            updates: newUpdates, 
+            lastMovementSummary: lastSummary 
+          } : item
         ));
         setSelectedCaseUpdates({ caseId: m.id, updates: newUpdates });
       }

@@ -7,6 +7,10 @@ export interface DatajudProcess {
   tribunal: string;
   orgao_julgador: string;
   data_ajuizamento: string;
+  client?: string;
+  opposingParty?: string;
+  currentSituation?: string;
+  notificationDate?: string;
   movimentacoes: {
     id: number;
     data: string;
@@ -53,6 +57,15 @@ export const datajudService = {
       const source = hits[0]._source;
       const tribunal = hits[0]._tribunal || 'DATAJUD';
       
+      // Encontrar partes (Autor/Réu)
+      const autor = source.partes?.find((p: any) => p.tipoPersonagem === 'ATIVO')?.nome || 'Não localizado';
+      const reu = source.partes?.find((p: any) => p.tipoPersonagem === 'PASSIVO')?.nome || 'Não localizado';
+      
+      // Encontrar última movimentação
+      const ultimaMov = (source.movimentos || source.movimentacoes || [])[0];
+      const teorMov = ultimaMov?.nome || ultimaMov?.movimento?.nome || 'Aguardando atualização';
+      const dataMov = ultimaMov?.dataHora ? new Date(ultimaMov.dataHora).toLocaleDateString('pt-BR') : '';
+
       return {
         id: source.id || (source.numeroProcesso + (source.grau || '')),
         number: source.numeroProcesso,
@@ -61,6 +74,10 @@ export const datajudService = {
         tribunal: tribunal,
         orgao_julgador: source.orgaoJulgador?.nome || 'Vara Indefinida',
         data_ajuizamento: source.dataAjuizamento,
+        client: autor,
+        opposingParty: reu,
+        currentSituation: teorMov,
+        notificationDate: dataMov,
         movimentacoes: (source.movimentos || source.movimentacoes || []).map((m: any, i: number) => ({
           id: i,
           data: m.dataHora,
