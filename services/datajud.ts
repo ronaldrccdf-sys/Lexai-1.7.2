@@ -41,9 +41,15 @@ export const datajudService = {
     }
     
     const body = {
+      size: 1,
       query: {
-        match: {
-          numeroProcesso: cleanCNJ
+        bool: {
+          should: [
+            { term: { numeroProcesso: cleanCNJ } },
+            { term: { 'numeroProcesso.keyword': cleanCNJ } },
+            { match: { numeroProcesso: cleanCNJ } }
+          ],
+          minimum_should_match: 1
         }
       }
     };
