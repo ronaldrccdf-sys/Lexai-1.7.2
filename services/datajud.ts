@@ -21,7 +21,7 @@ export interface DatajudProcess {
 }
 
 export const DATAJUD_TRIBUNAL_ALIASES = [
-  'tjac', 'tjal', 'tjap', 'tjam', 'tjba', 'tjce', 'tjdf', 'tjes', 'tjgo', 'tjma',
+  'tjac', 'tjal', 'tjap', 'tjam', 'tjba', 'tjce', 'tjdft', 'tjes', 'tjgo', 'tjma',
   'tjmt', 'tjms', 'tjmg', 'tjpa', 'tjpb', 'tjpr', 'tjpe', 'tjpi', 'tjrj', 'tjrn',
   'tjrs', 'tjro', 'tjrr', 'tjsc', 'tjse', 'tjsp', 'tjto',
   'trf1', 'trf2', 'trf3', 'trf4', 'trf5', 'trf6',
