@@ -1,8 +1,8 @@
 
-import React, { useState, useRef } from 'react';
-import { Case, CaseUpdate } from '../types';
+import React, { useState } from 'react';
+import { Case } from '../types';
 import { legalAssistantService } from '../services/gemini';
-import { datajudService } from '../services/datajud';
+import { datajudService, DATAJUD_TRIBUNAL_ALIASES } from '../services/datajud';
 
 interface MattersProps {
   matters: Case[];
@@ -12,34 +12,31 @@ interface MattersProps {
 
 const Matters: React.FC<MattersProps> = ({ matters, setMatters, onGenerateAI }) => {
   const [searchCNJ, setSearchCNJ] = useState('');
-  const [genericSearch, setGenericSearch] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [selectedAlias, setSelectedAlias] = useState(DATAJUD_TRIBUNAL_ALIASES[0]);
   const [isSearchingRemote, setIsSearchingRemote] = useState(false);
-  const [isSearchingGeneric, setIsSearchingGeneric] = useState(false);
   const [syncingId, setSyncingId] = useState<string | null>(null);
   const [selectedCaseUpdates, setSelectedCaseUpdates] = useState<{caseId: string, updates: any[]} | null>(null);
 
-  const handleGenericSearch = async () => {
-    if (!genericSearch) return;
-    setIsSearchingGeneric(true);
-    try {
-      const results = await datajudService.searchByFilters(genericSearch);
-      setSearchResults(results);
-    } catch (err) {
-      alert("Erro na pesquisa genérica.");
-    } finally {
-      setIsSearchingGeneric(false);
-    }
+  const findPossibleIntimation = (movements: { nome?: string; conteudo?: string; data: string }[]) => {
+    return movements.find((movement) => {
+      const label = (movement.nome || movement.conteudo || '').toLowerCase();
+      return label.includes('intima') || label.includes('cita');
+    });
   };
 
   const handleRemoteSearch = async (targetNumber?: string) => {
     const query = targetNumber || searchCNJ;
     if (!query) return;
+    if (!selectedAlias) {
+      alert("Selecione o tribunal (alias) antes de consultar.");
+      return;
+    }
     setIsSearchingRemote(true);
     try {
-      const result = await datajudService.getProcessByCNJ(query);
+      const result = await datajudService.getProcessByCNJ(query, selectedAlias);
       if (result) {
         const lastMovement = result.movimentacoes?.[0]?.conteudo || "Ajuizamento detectado";
+        const possibleIntimation = findPossibleIntimation(result.movimentacoes || []);
         const interpretation = await legalAssistantService.interpretMovement(lastMovement);
 
         const newCase: Case = {
@@ -53,8 +50,11 @@ const Matters: React.FC<MattersProps> = ({ matters, setMatters, onGenerateAI }) 
           responsible: 'Dr. Ronald Serra',
           openDate: result.data_ajuizamento ? new Date(result.data_ajuizamento).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR'),
           billableHours: 0,
+          tribunal: result.tribunal,
+          tribunalAlias: result.tribunalAlias,
           currentSituation: lastMovement,
           lastMovementSummary: interpretation,
+          notificationDate: possibleIntimation ? new Date(possibleIntimation.data).toLocaleDateString('pt-BR') : undefined,
           updates: result.movimentacoes?.map(m => ({
             id: String(m.id),
             date: new Date(m.data).toLocaleDateString('pt-BR'),
@@ -65,12 +65,12 @@ const Matters: React.FC<MattersProps> = ({ matters, setMatters, onGenerateAI }) 
         };
         setMatters(prev => [newCase, ...prev]);
         setSearchCNJ('');
-        setSearchResults([]);
       } else {
         alert("Processo não localizado na base do CNJ.");
       }
     } catch (err) {
-      alert("Falha ao comunicar com o Radar DATAJUD.");
+      const message = err instanceof Error ? err.message : "Falha ao comunicar com o Radar DATAJUD.";
+      alert(message);
     } finally {
       setIsSearchingRemote(false);
     }
@@ -78,10 +78,16 @@ const Matters: React.FC<MattersProps> = ({ matters, setMatters, onGenerateAI }) 
 
   const handleSyncDatajud = async (m: Case) => {
     setSyncingId(m.id);
+    if (!m.tribunalAlias) {
+      alert("Este processo não possui alias de tribunal. Atualize o cadastro.");
+      setSyncingId(null);
+      return;
+    }
     try {
-      const result = await datajudService.getProcessByCNJ(m.number);
+      const result = await datajudService.getProcessByCNJ(m.number, m.tribunalAlias);
       if (result) {
         const latestRaw = result.movimentacoes[0]?.conteudo || "Sem movimentos";
+        const possibleIntimation = findPossibleIntimation(result.movimentacoes || []);
         const lastSummary = await legalAssistantService.interpretMovement(latestRaw);
 
         const newUpdates = result.movimentacoes.slice(0, 10).map(mv => ({
@@ -93,12 +99,13 @@ const Matters: React.FC<MattersProps> = ({ matters, setMatters, onGenerateAI }) 
         }));
 
         setMatters(prev => prev.map(item => 
-          item.id === m.id ? { ...item, updates: newUpdates, lastMovementSummary: lastSummary } : item
+          item.id === m.id ? { ...item, updates: newUpdates, lastMovementSummary: lastSummary, notificationDate: possibleIntimation ? new Date(possibleIntimation.data).toLocaleDateString('pt-BR') : item.notificationDate } : item
         ));
         setSelectedCaseUpdates({ caseId: m.id, updates: newUpdates });
       }
     } catch (err) {
-      alert("Erro na sincronização.");
+      const message = err instanceof Error ? err.message : "Erro na sincronização.";
+      alert(message);
     } finally {
       setSyncingId(null);
     }
@@ -122,38 +129,21 @@ const Matters: React.FC<MattersProps> = ({ matters, setMatters, onGenerateAI }) 
         </div>
         
         <div className="flex flex-col md:flex-row gap-4 w-full xl:w-auto">
-          <div className="flex-1 md:w-96 bg-[#1C1C1C] border border-[#D4AF37]/20 p-2 rounded-2xl flex gap-2 relative">
-            <input 
-              type="text" 
-              value={genericSearch}
-              onChange={(e) => setGenericSearch(e.target.value)}
-              placeholder="PESQUISAR (CPF, CNPJ, OAB, NOME)"
+          <div className="flex-1 md:w-80 bg-[#1C1C1C] border border-[#D4AF37]/20 p-2 rounded-2xl flex gap-2">
+            <select
+              value={selectedAlias}
+              onChange={(e) => setSelectedAlias(e.target.value)}
               className="flex-1 bg-transparent text-[10px] font-bold text-white uppercase outline-none px-3"
-              onKeyPress={(e) => e.key === 'Enter' && handleGenericSearch()}
-            />
-            <button 
-              onClick={handleGenericSearch}
-              disabled={isSearchingGeneric}
-              className="gold-gradient px-4 py-2 rounded-xl text-[10px] font-black text-white uppercase transition-all shadow-lg active:scale-95 disabled:opacity-50"
             >
-              {isSearchingGeneric ? 'BUSCANDO...' : 'PESQUISAR'}
-            </button>
-
-            {searchResults.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-[#1C1C1C] border border-gray-800 rounded-2xl shadow-2xl z-[100] max-h-60 overflow-y-auto p-4 space-y-2">
-                <p className="text-[8px] font-black text-gray-500 uppercase tracking-widest mb-2">Resultados Encontrados</p>
-                {searchResults.map((res, idx) => (
-                  <div 
-                    key={idx} 
-                    onClick={() => handleRemoteSearch(res.number)}
-                    className="p-3 bg-black/20 rounded-xl border border-gray-800 hover:border-[#D4AF37]/50 cursor-pointer transition-all"
-                  >
-                    <p className="text-[10px] font-black text-white">{res.number}</p>
-                    <p className="text-[8px] text-gray-500 uppercase">{res.title} • {res.court}</p>
-                  </div>
-                ))}
-              </div>
-            )}
+              {DATAJUD_TRIBUNAL_ALIASES.map((alias) => (
+                <option key={alias} value={alias} className="bg-[#1C1C1C] text-white">
+                  {alias.toUpperCase()}
+                </option>
+              ))}
+            </select>
+            <div className="flex items-center px-3 text-[8px] font-black uppercase tracking-widest text-gray-500">
+              Alias do Tribunal
+            </div>
           </div>
 
           <div className="flex-1 md:w-80 bg-[#1C1C1C] border border-[#D4AF37]/20 p-2 rounded-2xl flex gap-2">
