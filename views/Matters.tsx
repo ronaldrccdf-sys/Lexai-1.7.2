@@ -220,7 +220,7 @@ const Matters: React.FC<MattersProps> = ({ matters, setMatters, onGenerateAI }) 
                   </td>
                   <td className="px-4 py-8 max-w-[250px]">
                     <div className="bg-black/30 p-4 rounded-xl border border-gray-800/50 group-hover:border-[#D4AF37]/30 transition-all">
-                       <p className="text-[9px] text-gray-300 font-serif italic leading-relaxed text-justify line-clamp-3">
+                      <p className="text-[9px] text-gray-300 italic leading-relaxed text-justify line-clamp-3">
                          {m.lastMovementSummary || 'Aguardando varredura LexAI...'}
                        </p>
                     </div>
@@ -269,7 +269,7 @@ const Matters: React.FC<MattersProps> = ({ matters, setMatters, onGenerateAI }) 
                          <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">{up.date}</span>
                          <span className="text-[8px] font-black text-gray-700 uppercase">Verificado LexAI</span>
                       </div>
-                      <p className="text-gray-300 font-serif leading-relaxed italic border-l-2 border-[#D4AF37] pl-6 text-sm">
+                      <p className="text-gray-300 leading-relaxed italic border-l-2 border-[#D4AF37] pl-6 text-sm">
                         {up.content}
                       </p>
                    </div>
