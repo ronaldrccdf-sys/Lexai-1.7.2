@@ -20,15 +20,20 @@ export interface DatajudProcess {
 }
 
 export const datajudService = {
+  normalizeNumeroProcesso(input: string): string {
+    return String(input || '').replace(/\D/g, '');
+  },
+
   async getProcessByCNJ(cnj: string): Promise<DatajudProcess | null> {
-    const cleanCNJ = cnj.replace(/[^0-9]/g, '');
+    const cleanCNJ = datajudService.normalizeNumeroProcesso(cnj);
     if (cleanCNJ.length !== 20) {
       console.warn("Número de processo inválido (deve ter 20 dígitos):", cleanCNJ);
     }
     
     const body = {
+      size: 1,
       query: {
-        match: {
+        term: {
           numeroProcesso: cleanCNJ
         }
       }
@@ -79,10 +84,11 @@ export const datajudService = {
   },
 
   async searchByFilters(filter: string): Promise<any[]> {
+    const cleanFilter = datajudService.normalizeNumeroProcesso(filter);
     const body = {
       query: {
-        match: {
-          numeroProcesso: filter.replace(/[^0-9]/g, '')
+        term: {
+          numeroProcesso: cleanFilter
         }
       }
     };

@@ -69,9 +69,22 @@ app.post('/proxy/generate_docx', async (req, res) => {
 const DATAJUD_BASE_URL = 'https://api-publica.datajud.cnj.jus.br';
 const DATAJUD_API_KEY = process.env.DATAJUD_API_KEY || 'cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw==';
 
+const ALIAS_MAP: Record<string, string> = {
+  TJDFT: 'tjdft'
+};
+
+const getAlias = (label?: string): string => {
+  if (!label) return '';
+  return ALIAS_MAP[label] || String(label).toLowerCase();
+};
+
+const normalizeNumeroProcesso = (input: unknown): string => {
+  return String(input || '').replace(/\D/g, '');
+};
+
 const ENDPOINTS = [
   'tjsp', 'trf1', 'trt2', 'stj', 'tst', 'tse', 'stm',
-  'tjac', 'tjal', 'tjap', 'tjam', 'tjba', 'tjce', 'tjdf', 'tjes', 'tjgo', 'tjma',
+  'tjac', 'tjal', 'tjap', 'tjam', 'tjba', 'tjce', 'tjdft', 'tjes', 'tjgo', 'tjma',
   'tjmt', 'tjms', 'tjmg', 'tjpa', 'tjpb', 'tjpr', 'tjpe', 'tjpi', 'tjrj', 'tjrn',
   'tjrs', 'tjro', 'tjrr', 'tjsc', 'tjse', 'tjt0',
   'trf2', 'trf3', 'trf4', 'trf5', 'trf6',
@@ -83,7 +96,13 @@ app.post('/proxy/datajud/search_all', async (req, res) => {
   console.log('Exhaustive search requested:', JSON.stringify(req.body));
   
   // Format the query properly for DataJud
-  const query = req.body;
+  const query = { ...req.body };
+  if (query?.query?.term?.numeroProcesso) {
+    query.query.term.numeroProcesso = normalizeNumeroProcesso(query.query.term.numeroProcesso);
+  }
+  if (query?.query?.match?.numeroProcesso) {
+    query.query.match.numeroProcesso = normalizeNumeroProcesso(query.query.match.numeroProcesso);
+  }
 
   // Prioritize most relevant endpoints for Brazilian Law to speed up and improve hit rate
   const prioritizedEndpoints = [
@@ -149,7 +168,8 @@ app.post('/proxy/datajud/search_all', async (req, res) => {
 
 app.post('/proxy/datajud/:tribunal', async (req, res) => {
   const { tribunal } = req.params;
-  const endpoint = `${DATAJUD_BASE_URL}/api_publica_${tribunal}/_search`;
+  const alias = getAlias(tribunal);
+  const endpoint = `${DATAJUD_BASE_URL}/api_publica_${alias}/_search`;
 
   console.log(`Proxying request to: ${endpoint}`);
   console.log('Request body:', JSON.stringify(req.body));
