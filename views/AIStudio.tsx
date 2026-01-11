@@ -352,7 +352,7 @@ const AIStudio: React.FC<{ initialContext?: string, userName: string }> = ({ ini
                  </button>
                </div>
             </div>
-            <div className="font-serif text-justify leading-relaxed" dangerouslySetInnerHTML={{ __html: generatedHtml }} />
+            <div className="text-justify leading-relaxed" dangerouslySetInnerHTML={{ __html: generatedHtml }} />
           </div>
         ) : (
           <div className="py-40 opacity-10 text-center select-none pointer-events-none">
