@@ -62,7 +62,8 @@ export const datajudService = {
       const reu = source.partes?.find((p: any) => p.tipoPersonagem === 'PASSIVO')?.nome || 'Não localizado';
       
       // Encontrar última movimentação
-      const ultimaMov = (source.movimentos || source.movimentacoes || [])[0];
+      const movimentacoes = (source.movimentos || source.movimentacoes || []);
+      const ultimaMov = movimentacoes[0];
       const teorMov = ultimaMov?.nome || ultimaMov?.movimento?.nome || 'Aguardando atualização';
       const dataMov = ultimaMov?.dataHora ? new Date(ultimaMov.dataHora).toLocaleDateString('pt-BR') : '';
 
@@ -78,10 +79,10 @@ export const datajudService = {
         opposingParty: reu,
         currentSituation: teorMov,
         notificationDate: dataMov,
-        movimentacoes: (source.movimentos || source.movimentacoes || []).map((m: any, i: number) => ({
+        movimentacoes: movimentacoes.map((m: any, i: number) => ({
           id: i,
           data: m.dataHora,
-          conteudo: m.nome || m.movimento?.nome || 'Movimentação sem descrição',
+          conteudo: m.complementosTabelados?.[0]?.descricao || m.nome || m.movimento?.nome || 'Movimentação sem descrição',
           nome: m.nome || m.movimento?.nome
         })),
         partes: (source.partes || []).map((p: any) => ({

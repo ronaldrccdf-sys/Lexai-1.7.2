@@ -39,15 +39,15 @@ const Matters: React.FC<MattersProps> = ({ matters, setMatters, onGenerateAI }) 
     try {
       const result = await datajudService.getProcessByCNJ(query);
       if (result) {
-        const lastMovement = result.movimentacoes?.[0]?.conteudo || "Ajuizamento detectado";
+        const lastMovement = result.currentSituation || "Ajuizamento detectado";
         const interpretation = await legalAssistantService.interpretMovement(lastMovement);
 
         const newCase: Case = {
           id: result.id,
           number: result.numero_cnj,
           title: result.classe || 'Ação Judicial',
-          client: 'Consultar PJe (Sigilo)',
-          opposingParty: result.orgao_julgador || 'Órgão Competente',
+          client: result.client || 'Consultar PJe',
+          opposingParty: result.opposingParty || result.orgao_julgador || 'Órgão Competente',
           status: 'Aberto',
           type: 'Conhecimento',
           responsible: 'Dr. Ronald Serra',
@@ -55,6 +55,7 @@ const Matters: React.FC<MattersProps> = ({ matters, setMatters, onGenerateAI }) 
           billableHours: 0,
           currentSituation: lastMovement,
           lastMovementSummary: interpretation,
+          notificationDate: result.notificationDate,
           updates: result.movimentacoes?.map(m => ({
             id: String(m.id),
             date: new Date(m.data).toLocaleDateString('pt-BR'),
@@ -63,7 +64,7 @@ const Matters: React.FC<MattersProps> = ({ matters, setMatters, onGenerateAI }) 
             type: 'Movimentação'
           }))
         };
-        setMatters(prev => [newCase, ...prev]);
+        setMatters(prev => [newCase, ...prev.filter(c => c.number !== newCase.number)]);
         setSearchCNJ('');
         setSearchResults([]);
       } else {
@@ -276,7 +277,9 @@ const Matters: React.FC<MattersProps> = ({ matters, setMatters, onGenerateAI }) 
               </div>
 
               <div className="space-y-6">
-                 {selectedCaseUpdates.updates.map((up, idx) => (
+                 {Array.from(new Set(selectedCaseUpdates.updates.map(u => JSON.stringify(u))))
+                   .map(s => JSON.parse(s))
+                   .map((up, idx) => (
                    <div key={idx} className="bg-black/20 p-8 rounded-3xl border border-gray-800 relative group hover:border-[#D4AF37]/30 transition-all">
                       <div className="flex justify-between items-start mb-4">
                          <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">{up.date}</span>
