@@ -67,20 +67,30 @@ app.post('/proxy/generate_docx', async (req, res) => {
 });
 
 const DATAJUD_BASE_URL = 'https://api-publica.datajud.cnj.jus.br';
-const DATAJUD_API_KEY = process.env.DATAJUD_API_KEY || 'cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw==';
+const DATAJUD_API_KEY = process.env.DATAJUD_API_KEY;
 
 const ENDPOINTS = [
-  'tjsp', 'trf1', 'trt2', 'stj', 'tst', 'tse', 'stm',
-  'tjac', 'tjal', 'tjap', 'tjam', 'tjba', 'tjce', 'tjdf', 'tjes', 'tjgo', 'tjma',
-  'tjmt', 'tjms', 'tjmg', 'tjpa', 'tjpb', 'tjpr', 'tjpe', 'tjpi', 'tjrj', 'tjrn',
-  'tjrs', 'tjro', 'tjrr', 'tjsc', 'tjse', 'tjt0',
-  'trf2', 'trf3', 'trf4', 'trf5', 'trf6',
-  'trt1', 'trt3', 'trt4', 'trt5', 'trt6', 'trt7', 'trt8', 'trt9', 'trt10', 'trt11',
-  'trt12', 'trt13', 'trt14', 'trt15', 'trt16', 'trt17', 'trt18', 'trt19', 'trt20', 'trt21', 'trt22', 'trt23', 'trt24'
+  'tst', 'tse', 'stj', 'stm',
+  'trf1', 'trf2', 'trf3', 'trf4', 'trf5', 'trf6',
+  'tjac', 'tjal', 'tjam', 'tjap', 'tjba', 'tjce', 'tjdft', 'tjes', 'tjgo', 'tjma',
+  'tjmg', 'tjms', 'tjmt', 'tjpa', 'tjpb', 'tjpe', 'tjpi', 'tjpr', 'tjrj', 'tjrn',
+  'tjro', 'tjrr', 'tjrs', 'tjsc', 'tjse', 'tjsp', 'tjto',
+  'trt1', 'trt2', 'trt3', 'trt4', 'trt5', 'trt6', 'trt7', 'trt8', 'trt9', 'trt10',
+  'trt11', 'trt12', 'trt13', 'trt14', 'trt15', 'trt16', 'trt17', 'trt18', 'trt19',
+  'trt20', 'trt21', 'trt22', 'trt23', 'trt24',
+  'tre-ac', 'tre-al', 'tre-am', 'tre-ap', 'tre-ba', 'tre-ce', 'tre-dft', 'tre-es',
+  'tre-go', 'tre-ma', 'tre-mg', 'tre-ms', 'tre-mt', 'tre-pa', 'tre-pb', 'tre-pe',
+  'tre-pi', 'tre-pr', 'tre-rj', 'tre-rn', 'tre-ro', 'tre-rr', 'tre-rs', 'tre-sc',
+  'tre-se', 'tre-sp', 'tre-to',
+  'tjmmg', 'tjmrs', 'tjmsp'
 ];
 
 app.post('/proxy/datajud/search_all', async (req, res) => {
   console.log('Exhaustive search requested:', JSON.stringify(req.body));
+
+  if (!DATAJUD_API_KEY) {
+    return res.status(500).json({ error: 'DATAJUD_API_KEY não configurada no servidor.' });
+  }
   
   // Format the query properly for DataJud
   const query = req.body;
@@ -155,6 +165,10 @@ app.post('/proxy/datajud/:tribunal', async (req, res) => {
   console.log('Request body:', JSON.stringify(req.body));
 
   try {
+    if (!DATAJUD_API_KEY) {
+      return res.status(500).json({ error: 'DATAJUD_API_KEY não configurada no servidor.' });
+    }
+
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: {

@@ -88,7 +88,7 @@ const AIStudio: React.FC<{ initialContext?: string, userName: string }> = ({ ini
       if (result && result.html) {
         const today = new Date().toLocaleDateString('pt-BR');
         const signature = `
-          <div style="margin-top: 100px; text-align: center; font-family: 'Times New Roman', serif; color: black;">
+          <div style="margin-top: 100px; text-align: center; font-family: 'Inter', sans-serif; color: black;">
             <p>Brasília, ${today}.</p>
             <br/><br/>
             <p style="font-weight: bold; margin: 0;">${userName}</p>
@@ -352,7 +352,7 @@ const AIStudio: React.FC<{ initialContext?: string, userName: string }> = ({ ini
                  </button>
                </div>
             </div>
-            <div className="font-serif text-justify leading-relaxed" dangerouslySetInnerHTML={{ __html: generatedHtml }} />
+            <div className="text-justify leading-relaxed" dangerouslySetInnerHTML={{ __html: generatedHtml }} />
           </div>
         ) : (
           <div className="py-40 opacity-10 text-center select-none pointer-events-none">

@@ -76,7 +76,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userName }) => {
               <div className="h-4 bg-gray-800/50 rounded-full w-1/2"></div>
             </div>
           ) : (
-            <div className="briefing-content text-gray-300 font-serif text-xl lg:text-2xl leading-[1.8] whitespace-pre-line italic opacity-90 text-justify">
+            <div className="briefing-content text-gray-300 text-xl lg:text-2xl leading-[1.8] whitespace-pre-line italic opacity-90 text-justify">
               <div className="space-y-4 briefing-content">
                 {briefing.split('\n').map((line, idx) => (
                   <p key={idx} className="briefing-content">{line}</p>

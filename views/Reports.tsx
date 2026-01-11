@@ -119,7 +119,7 @@ const Reports: React.FC = () => {
 
       {/* Diagnóstico Gerado pela IA */}
       {aiAnalysis && (
-        <section className="bg-white text-gray-900 p-10 rounded-[3rem] shadow-2xl font-serif animate-slideUp border-t-8 border-[#D4AF37] text-left">
+        <section className="bg-white text-gray-900 p-10 rounded-[3rem] shadow-2xl animate-slideUp border-t-8 border-[#D4AF37] text-left">
           <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
             <h3 className="text-2xl font-black uppercase tracking-tighter text-black">Relatório Estratégico Mensal</h3>
             <button onClick={() => setAiAnalysis(null)} className="text-gray-400 hover:text-black">✕</button>
@@ -310,7 +310,7 @@ const Reports: React.FC = () => {
 
            {queryResult && (
              <div className="bg-[#1C1C1C] p-8 rounded-[2.5rem] border-l-8 border-[#D4AF37] animate-slideUp">
-               <p className="text-sm text-gray-300 leading-relaxed font-serif whitespace-pre-wrap">{queryResult}</p>
+               <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">{queryResult}</p>
                <button onClick={() => setQueryResult(null)} className="text-[9px] font-black gold-text uppercase mt-4 hover:underline">Limpar Consulta</button>
              </div>
            )}
