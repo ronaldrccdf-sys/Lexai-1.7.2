@@ -85,6 +85,8 @@ export interface Case {
   title: string;
   client: string;
   opposingParty?: string; // Novo Campo
+  tribunal?: string;
+  tribunalAlias?: string;
   status: 'Aberto' | 'Fechado' | 'Pendente';
   type: CaseType;
   responsible: string;

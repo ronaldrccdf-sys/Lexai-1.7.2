@@ -5,6 +5,7 @@ export interface DatajudProcess {
   numero_cnj: string;
   classe: string;
   tribunal: string;
+  tribunalAlias: string;
   orgao_julgador: string;
   data_ajuizamento: string;
   movimentacoes: {
@@ -19,8 +20,19 @@ export interface DatajudProcess {
   }[];
 }
 
+export const DATAJUD_TRIBUNAL_ALIASES = [
+  'tjac', 'tjal', 'tjap', 'tjam', 'tjba', 'tjce', 'tjdf', 'tjes', 'tjgo', 'tjma',
+  'tjmt', 'tjms', 'tjmg', 'tjpa', 'tjpb', 'tjpr', 'tjpe', 'tjpi', 'tjrj', 'tjrn',
+  'tjrs', 'tjro', 'tjrr', 'tjsc', 'tjse', 'tjsp', 'tjto',
+  'trf1', 'trf2', 'trf3', 'trf4', 'trf5', 'trf6',
+  'trt1', 'trt2', 'trt3', 'trt4', 'trt5', 'trt6', 'trt7', 'trt8', 'trt9', 'trt10',
+  'trt11', 'trt12', 'trt13', 'trt14', 'trt15', 'trt16', 'trt17', 'trt18', 'trt19',
+  'trt20', 'trt21', 'trt22', 'trt23', 'trt24',
+  'stj', 'tst', 'tse', 'stm'
+];
+
 export const datajudService = {
-  async getProcessByCNJ(cnj: string): Promise<DatajudProcess | null> {
+  async getProcessByCNJ(cnj: string, tribunalAlias: string): Promise<DatajudProcess | null> {
     const cleanCNJ = cnj.replace(/[^0-9]/g, '');
     if (cleanCNJ.length !== 20) {
       console.warn("Número de processo inválido (deve ter 20 dígitos):", cleanCNJ);
@@ -35,7 +47,7 @@ export const datajudService = {
     };
 
     try {
-      const response = await fetch('/proxy/datajud/search_all', {
+      const response = await fetch(`/proxy/datajud/${tribunalAlias}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -51,7 +63,7 @@ export const datajudService = {
       if (!hits || hits.length === 0) return null;
 
       const source = hits[0]._source;
-      const tribunal = hits[0]._tribunal || 'DATAJUD';
+      const tribunal = hits[0]._tribunal || tribunalAlias.toUpperCase();
       
       return {
         id: source.id || (source.numeroProcesso + (source.grau || '')),
@@ -59,6 +71,7 @@ export const datajudService = {
         numero_cnj: source.numeroProcesso,
         classe: source.classe?.nome || 'Classe não informada',
         tribunal: tribunal,
+        tribunalAlias,
         orgao_julgador: source.orgaoJulgador?.nome || 'Vara Indefinida',
         data_ajuizamento: source.dataAjuizamento,
         movimentacoes: (source.movimentos || source.movimentacoes || []).map((m: any, i: number) => ({
@@ -75,30 +88,6 @@ export const datajudService = {
     } catch (error: any) {
       console.warn("Aviso DATAJUD: Erro de conexão.", error.message);
       return null;
-    }
-  },
-
-  async searchByFilters(filter: string): Promise<any[]> {
-    const body = {
-      query: {
-        match: {
-          numeroProcesso: filter.replace(/[^0-9]/g, '')
-        }
-      }
-    };
-    try {
-      const response = await fetch('/proxy/datajud/search_all', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(body)
-      });
-      if (!response.ok) return [];
-      const data = await response.json();
-      return data.hits?.hits || [];
-    } catch (e) {
-      return [];
     }
   }
 };
