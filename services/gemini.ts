@@ -274,7 +274,6 @@ export const legalAssistantService = {
   async unifiedActionHandler(query: string, files: UploadedFile[], currentData: any) {
     const ai = getAI();
     
-    // Processamento de arquivos anexados para garantir que o conteúdo seja lido e enviado
     let fileContext = "";
     if (files && files.length > 0) {
       for (const f of files) {
@@ -282,7 +281,6 @@ export const legalAssistantService = {
           const text = await extractTextFromWord(f.data);
           fileContext += `\nCONTEÚDO DO ARQUIVO "${f.name}":\n${text}\n---`;
         } else if (f.name.toLowerCase().endsWith('.pdf') || f.type === 'application/pdf') {
-          // Explicitly mark PDF for Gemini analysis
           fileContext += `\n[PDF ANEXADO PARA ANÁLISE: ${f.name}]`;
         } else {
           fileContext += `\n[Arquivo anexado: ${f.name} (${f.type})]`;
@@ -293,21 +291,19 @@ export const legalAssistantService = {
     const systemInstruction = `Você é o Cérebro LexAI, a inteligência central do sistema LexAI Pro.
     Sua função é auxiliar o advogado em qualquer tarefa do sistema através de comandos naturais.
     
-    CRITICAL: Você deve basear suas respostas EXCLUSIVAMENTE nos fatos reais contidos nos arquivos anexados e no contexto do sistema. NÃO invente dados, nomes de processos ou valores que não estejam presentes.
+    CRITICAL: Você deve basear suas respostas EXCLUSIVAMENTE nos fatos reais contidos nos arquivos anexados e no contexto do sistema. NÃO invente dados.
     
     Capacidades:
     1. Pesquisa Jurídica (Jurisprudência no DataJud e Doutrina no Google Acadêmico).
     2. Redação de Peças (Petições, Contestações, Contratos).
     3. Gestão de Clientes (Cadastrar, Consultar).
-    4. Relatórios (Gerar relatórios de processos ou faturamento).
-    5. Gestão de Prazos (Agenda e audiências).
+    4. Relatórios (Relatórios de processos ou faturamento).
+    5. Gestão de Prazos.
 
     Contexto Atual do Sistema: ${JSON.stringify(currentData)}
     Conteúdo dos Arquivos Anexados: ${fileContext}`;
 
     const parts: any[] = [];
-    
-    // Adiciona arquivos como inlineData se forem suportados nativamente pelo Gemini
     for (const f of files) {
       if (GEMINI_NATIVE_MIMES.includes(f.type)) {
         parts.push({ inlineData: { data: f.data, mimeType: f.type } });
@@ -320,7 +316,9 @@ export const legalAssistantService = {
       model: 'gemini-1.5-pro',
       systemInstruction: "Você é o Cérebro LexAI. Priorize o conteúdo dos arquivos anexados. Se for um PDF ou DOCX, extraia os nomes, datas e valores reais. Jamais invente dados."
     }).generateContent({ contents: [{ role: 'user', parts }] });
-    return { text: (res.response as any).text(), toolCalls: [] };
+    
+    const text = (res.response as any).text();
+    return { text, toolCalls: [] };
   },
 
   async generateDailySummaryWhatsApp(events: any[]) {

@@ -1,0 +1,382 @@
+ventos Sincronizados
+Base de Dados: CNJ - Tribunal Superior
+
+✕
+30/05/2022
+Verificado LexAI
+Distribuição
+
+12/06/2022
+Verificado LexAI
+Petição
+
+13/06/2022
+Verificado LexAI
+Expedição de documento
+
+17/06/2022
+Verificado LexAI
+Conclusão
+
+26/06/2022
+Verificado LexAI
+Petição
+
+27/06/2022
+Verificado LexAI
+Expedição de documento
+
+29/06/2022
+Verificado LexAI
+Conclusão
+
+28/07/2022
+Verificado LexAI
+Expedição de documento
+
+28/07/2022
+Verificado LexAI
+Petição
+
+29/07/2022
+Verificado LexAI
+Conclusão
+
+22/08/2022
+Verificado LexAI
+Petição
+
+22/08/2022
+Verificado LexAI
+Expedição de documento
+
+22/08/2022
+Verificado LexAI
+Petição
+
+12/09/2022
+Verificado LexAI
+Petição
+
+29/09/2022
+Verificado LexAI
+Petição
+
+30/09/2022
+Verificado LexAI
+Mandado
+
+30/09/2022
+Verificado LexAI
+Expedição de documento
+
+04/10/2022
+Verificado LexAI
+Conclusão
+
+04/10/2022
+Verificado LexAI
+Expedição de documento
+
+21/10/2022
+Verificado LexAI
+Petição
+
+21/10/2022
+Verificado LexAI
+Expedição de documento
+
+20/11/2022
+Verificado LexAI
+Petição
+
+22/11/2022
+Verificado LexAI
+Expedição de documento
+
+22/11/2022
+Verificado LexAI
+Expedição de documento
+
+22/11/2022
+Verificado LexAI
+Petição
+
+08/12/2022
+Verificado LexAI
+Petição
+
+13/12/2022
+Verificado LexAI
+Petição
+
+13/12/2022
+Verificado LexAI
+Expedição de documento
+
+14/12/2022
+Verificado LexAI
+Conclusão
+
+15/12/2022
+Verificado LexAI
+Expedição de documento
+
+13/02/2023
+Verificado LexAI
+Petição
+
+27/02/2023
+Verificado LexAI
+Petição
+
+27/02/2023
+Verificado LexAI
+Expedição de documento
+
+27/02/2023
+Verificado LexAI
+Conclusão
+
+07/03/2023
+Verificado LexAI
+Petição
+
+09/03/2023
+Verificado LexAI
+Petição
+
+09/03/2023
+Verificado LexAI
+Petição
+
+16/03/2023
+Verificado LexAI
+Expedição de documento
+
+17/03/2023
+Verificado LexAI
+Conclusão
+
+31/03/2023
+Verificado LexAI
+Expedição de documento
+
+07/04/2023
+Verificado LexAI
+Petição
+
+10/04/2023
+Verificado LexAI
+Expedição de documento
+
+10/04/2023
+Verificado LexAI
+Conclusão
+
+11/04/2023
+Verificado LexAI
+Expedição de documento
+
+16/04/2023
+Verificado LexAI
+Petição
+
+17/04/2023
+Verificado LexAI
+Expedição de documento
+
+18/04/2023
+Verificado LexAI
+Conclusão
+
+18/04/2023
+Verificado LexAI
+Expedição de documento
+
+19/04/2023
+Verificado LexAI
+Petição
+
+28/04/2023
+Verificado LexAI
+Petição
+
+04/05/2023
+Verificado LexAI
+Petição
+
+05/05/2023
+Verificado LexAI
+Petição
+
+08/05/2023
+Verificado LexAI
+Documento
+
+08/05/2023
+Verificado LexAI
+Conclusão
+
+08/05/2023
+Verificado LexAI
+Expedição de documento
+
+16/05/2023
+Verificado LexAI
+Petição
+
+18/05/2023
+Verificado LexAI
+Documento
+
+20/05/2023
+Verificado LexAI
+Petição
+
+22/05/2023
+Verificado LexAI
+Expedição de documento
+
+22/05/2023
+Verificado LexAI
+Conclusão
+
+30/05/2023
+Verificado LexAI
+Petição
+
+12/07/2023
+Verificado LexAI
+Conclusão
+
+13/07/2023
+Verificado LexAI
+Expedição de documento
+
+14/07/2023
+Verificado LexAI
+Petição
+
+14/07/2023
+Verificado LexAI
+Petição
+
+17/07/2023
+Verificado LexAI
+Conclusão
+
+19/07/2023
+Verificado LexAI
+Petição
+
+19/07/2023
+Verificado LexAI
+Petição
+
+20/07/2023
+Verificado LexAI
+Expedição de documento
+
+20/07/2023
+Verificado LexAI
+Petição
+
+26/07/2023
+Verificado LexAI
+Petição
+
+31/08/2023
+Verificado LexAI
+Expedição de documento
+
+31/08/2023
+Verificado LexAI
+Expedição de documento
+
+31/08/2023
+Verificado LexAI
+Petição
+
+11/09/2023
+Verificado LexAI
+Petição
+
+11/09/2023
+Verificado LexAI
+Petição
+
+12/09/2023
+Verificado LexAI
+Petição
+
+21/09/2023
+Verificado LexAI
+Petição
+
+22/09/2023
+Verificado LexAI
+Expedição de documento
+
+22/09/2023
+Verificado LexAI
+Conclusão
+
+29/09/2023
+Verificado LexAI
+Expedição de documento
+
+29/09/2023
+Verificado LexAI
+Petição
+
+04/10/2023
+Verificado LexAI
+Petição
+
+15/10/2023
+Verificado LexAI
+Expedição de documento
+
+15/10/2023
+Verificado LexAI
+Conclusão
+
+20/10/2023
+Verificado LexAI
+Petição
+
+25/10/2023
+Verificado LexAI
+Petição
+
+21/11/2023
+Verificado LexAI
+Expedição de documento
+
+22/11/2023
+Verificado LexAI
+Conclusão
+
+07/12/2023
+Verificado LexAI
+Expedição de documento
+
+08/12/2023
+Verificado LexAI
+Petição
+
+21/01/2024
+Verificado LexAI
+Petição
+
+28/02/2024
+Verificado LexAI
+Expedição de documento
+
+26/03/2024
+Verificado LexAI
+Expedição de documento
+
+26/03/2024
+Verificado LexAI
